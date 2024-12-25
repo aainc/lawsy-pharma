@@ -38,6 +38,8 @@ jobs:
 
         # 最新のリモート変更を取得
         git fetch origin main
+        git checkout main
+        git reset --hard origin/main        
 
         # リモートの変更をローカルにマージ
         git merge origin/main || true
@@ -55,4 +57,4 @@ jobs:
         fi
         
         # 強制的にプッシュ（非推奨の場合は要確認）
-        git push origin main --force
+        git push origin main --force-with-lease
