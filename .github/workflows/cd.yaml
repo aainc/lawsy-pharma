@@ -35,5 +35,8 @@ jobs:
         if [ -z "$RELEASE_TITLE" ]; then
           RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
         fi
-        git merge origin/dev --allow-unrelated-histories -m "Merge dev into main - $RELEASE_TITLE"
+        git merge origin/dev --allow-unrelated-histories -m "Merge dev into main - $RELEASE_TITLE" || true
+        # コンフリクトを自動解決
+        git merge --abort || true
+        git reset --hard origin/dev
         git push origin main
