@@ -25,7 +25,7 @@ jobs:
 
     - name: Checkout Main Branch
       run: |
-        git checkout -b main origin/main
+        git checkout -b main origin/main || git checkout main
 
     - name: Merge Dev into Main
       env:
@@ -36,13 +36,8 @@ jobs:
           RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
         fi
 
-        # 最新のリモート変更を取得
-        git fetch origin main
-        git checkout main
-        git reset --hard origin/main        
-
-        # リモートの変更をローカルにマージ
-        git merge origin/main || true
+        # 最新のリモート変更を取り込み
+        git pull origin main
 
         # dev を main にマージ（コンフリクト発生時は自動解決）
         git merge origin/dev --allow-unrelated-histories -m "Merge dev into main - $RELEASE_TITLE" || true
@@ -55,6 +50,12 @@ jobs:
           git add .
           git commit -m "Resolve conflicts by prioritizing dev branch - $RELEASE_TITLE"
         fi
-        
-        # 強制的にプッシュ（非推奨の場合は要確認）
-        git push origin main --force-with-lease
+
+        # リモートにプッシュ（非強制で試行）
+        git push origin main || true
+
+        # 必要に応じて強制プッシュ
+        if git log origin/main..main | grep -q '^'; then
+          echo "Force pushing due to diverging histories."
+          git push origin main --force-with-lease
+        fi
