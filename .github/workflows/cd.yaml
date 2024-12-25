@@ -35,8 +35,24 @@ jobs:
         if [ -z "$RELEASE_TITLE" ]; then
           RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
         fi
+
+        # 最新のリモート変更を取得
+        git fetch origin main
+
+        # リモートの変更をローカルにマージ
+        git merge origin/main || true
+
+        # dev を main にマージ（コンフリクト発生時は自動解決）
         git merge origin/dev --allow-unrelated-histories -m "Merge dev into main - $RELEASE_TITLE" || true
-        # コンフリクトを自動解決
-        git merge --abort || true
-        git reset --hard origin/dev
-        git push origin main
+
+        # コンフリクト解消: dev の変更を優先
+        if git diff --name-only --diff-filter=U | grep -q '^'; then
+          echo "Conflicts detected. Resolving by prioritizing 'dev'."
+          git merge --abort
+          git reset --hard origin/dev
+          git add .
+          git commit -m "Resolve conflicts by prioritizing dev branch - $RELEASE_TITLE"
+        fi
+        
+        # 強制的にプッシュ（非推奨の場合は要確認）
+        git push origin main --force
