@@ -13,18 +13,27 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Fetch Dev Branch
+    - name: Fetch Dev and Main Branches
       run: |
+        # Fetch both dev and main branches
         git fetch origin dev
+        git fetch origin main
+
+    - name: Checkout Main Branch
+      run: |
+        # Check out the main branch or create it locally if not present
+        git checkout -b main origin/main
 
     - name: Merge Dev into Main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        # Set the release title or fallback to the tag name
         RELEASE_TITLE="${{ github.event.release.name }}"
         if [ -z "$RELEASE_TITLE" ]; then
           RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
         fi
-        git checkout origin main
+        # Merge dev into main with the release title
         git merge origin/dev -m "Merge dev into main - $RELEASE_TITLE"
+        # Push changes to the main branch
         git push origin main
