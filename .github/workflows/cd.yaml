@@ -25,6 +25,6 @@ jobs:
         if [ -z "$RELEASE_TITLE" ]; then
           RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
         fi
-        git checkout main
+        git checkout origin main
         git merge origin/dev -m "Merge dev into main - $RELEASE_TITLE"
         git push origin main
