@@ -1,0 +1,30 @@
+name: CD
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  merge-dev-to-main:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Fetch Dev Branch
+      run: |
+        git fetch origin dev
+
+    - name: Merge Dev into Main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        RELEASE_TITLE="${{ github.event.release.name }}"
+        if [ -z "$RELEASE_TITLE" ]; then
+          RELEASE_TITLE="Release ${{ github.event.release.tag_name }}"
+        fi
+        git checkout main
+        git merge origin/dev -m "Merge dev into main - $RELEASE_TITLE"
+        git push origin main
