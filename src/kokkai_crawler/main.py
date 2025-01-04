@@ -50,6 +50,7 @@ def main(output_path: Path, from_year: int = 1945, until_year: int = 2025):
     existing_months = set()
     existing_issue_ids = set()
     existing_speech_ids = set()
+    char_count = 0
     if output_path.exists():
         logger.info("loading existing data...")
         with open(output_path) as fin:
@@ -60,7 +61,9 @@ def main(output_path: Path, from_year: int = 1945, until_year: int = 2025):
                 existing_issue_ids.add(d["issueID"])
                 for dd in d["speechRecord"]:
                     existing_speech_ids.add(dd["speechID"])
+                    char_count += len(dd["speech"])
         logger.info("existing speeches: {}", len(existing_speech_ids))
+        logger.info("char: {} (avg: {:.2f})", char_count, char_count / len(existing_speech_ids))
         logger.info("existing issues: {}", len(existing_issue_ids))
         min_existing_month = min(existing_months)
         max_existing_month = max(existing_months)
@@ -73,7 +76,6 @@ def main(output_path: Path, from_year: int = 1945, until_year: int = 2025):
     else:
         min_existing_month = None
         max_existing_month = None
-
     target_year_months = []
     today = datetime.date.today()
     for year in range(from_year, until_year + 1):

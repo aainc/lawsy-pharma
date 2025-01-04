@@ -1,0 +1,5 @@
+.stIFrame {
+    border: 2px gray solid;
+    text-indent: 1rem;
+    list-style-position: inside;
+}
