@@ -9,8 +9,15 @@ class OpenAITextEmbedding:
     ) -> None:
         from openai import OpenAI
 
+        assert self.model_name in ("text-embedding-3-large", "text-embedding-3-small")
         self.model_name = model_name
         self.client = OpenAI()
+
+    def get_dimension(self) -> int:
+        if self.model_name == "text-embedding-3-large":
+            return 3072
+        else:
+            return 1536
 
     def get_name(self) -> str:
         return f"OpenAI-{self.model_name}"

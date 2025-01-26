@@ -29,6 +29,9 @@ class ME5Instruct:
         logger.info("ME5Instruct is prepared")
         self.model.eval()
 
+    def get_dimension(self) -> int:
+        return 1024
+
     def get_name(self) -> str:
         return f"E5Instruct-{self.model_name}"
 

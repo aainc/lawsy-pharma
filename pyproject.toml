@@ -7,8 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.12.3",
     "dspy>=2.5.43",
+    "faiss-cpu>=1.9.0.post1",
     "ftfy>=6.3.1",
     "fugashi>=1.4.0",
+    "ja-law-parser>=0.3.0",
     "jupyterlab>=4.3.4",
     "loguru>=0.7.3",
     "lxml>=5.3.0",

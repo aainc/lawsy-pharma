@@ -1,16 +1,43 @@
-# lax_dx_hackathon_2025
-A repository for 「法令」×「デジタル」ハッカソン
+# Lawsy -- Legal Search Made Easy
 
+## Requirements
 
-## Development
-### Setup
+- Python
+    - uv `pip install uv`
+- GCP
+    - [Cloud SDK](https://cloud.google.com/sdk?hl=ja)
 
-install all dependencies:
+## Setup
+
+Install Python packages
 
 ```shell
-pip install uv  # install uv
 make install
 ```
+
+## Create .env file
+
+Create .env file and put it on the repository root directory.
+
+```text
+OPENAI_API_KEY=...
+```
+
+## Run App
+
+### Download Preprocessed Data
+
+```shell
+make lawsy-download-preprocessed-data
+```
+
+### Run
+
+```shell
+make lawsy-run-app
+```
+
+## Development
 
 ### Format & Lint
 
@@ -26,15 +53,10 @@ lint:
 make lint
 ```
 
-## Applications
+### Development Flow (merge into dev)
 
-### Kokkai Crawler
-
-国会の議事録を取得するためのコード
-src: `src/kokkai_crawler`
-
-全議事録の取得（既存がある場合、最終年/月以外はスキップ）:
-
-```shell
-make crawl-all
-```
+1. Create your branch `feature/{{feature-name}}` from dev
+2. Create a pull request into dev
+3. Fix lint errors
+4. Review the PR
+5. Merge the PR

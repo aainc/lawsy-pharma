@@ -14,7 +14,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 ENV HF_HOME="/app/cache/"
 COPY ./cache/hub/models--intfloat--multilingual-e5-large-instruct /app/cache/hub/models--intfloat--multilingual-e5-large-instruct
-COPY ./outputs/law/laws.qdrant /app/outputs/law/laws.qdrant
+COPY .env /app/.env
+COPY ./outputs/lawsy/article_chunks.jsonl /app/outputs/lawsy/article_chunks.jsonl
+COPY ./outputs/lawsy/article_chunks_faiss /app/outputs/lawsy/article_chunks_faiss
 
 ARG PORT="8501"
 ENV PORT=${PORT}
@@ -24,4 +26,4 @@ COPY ./src ./src
 COPY ./Makefile ./Makefile
 ENV PYTHONPATH=src
 
-CMD ["streamlit", "run", "src/lawsearch/app/app.py"]
+CMD ["streamlit", "run", "src/lawsy/app/app.py"]
