@@ -7,7 +7,7 @@ import streamlit as st
 from loguru import logger
 
 from lawsy.ai.query_expander import QueryExpander
-from lawsy.ai.report_writer import ReportWriter
+from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
 from lawsy.retriever.faiss import FaissHNSWRetriever
 
@@ -61,3 +61,11 @@ def load_report_writer(_lm) -> ReportWriter:
             logger.info("loading report writer...")
             st.session_state.report_writer = ReportWriter(lm=_lm)
     return st.session_state.report_writer
+
+
+def load_stream_report_writer(_lm) -> StreamReportWriter:
+    if "stream_report_writer" not in st.session_state:
+        with st.spinner("loading stream report writer..."):
+            logger.info("loading stream report writer...")
+            st.session_state.stream_report_writer = StreamReportWriter(lm=_lm)
+    return st.session_state.stream_report_writer
