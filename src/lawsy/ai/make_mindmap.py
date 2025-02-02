@@ -22,7 +22,8 @@ class MindMap(dspy.Signature):
            ## CE
            ### CEC
            ### CED
-        """  # noqa: E501
+    """  # noqa: E501
+
     report = dspy.InputField(desc="記載されたレポート", format=str)
     mindmap = dspy.OutputField(desc="レポートを基に作成されたマインドマップ", format=str)
 

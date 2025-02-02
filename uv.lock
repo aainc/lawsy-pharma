@@ -1568,6 +1568,7 @@ dependencies = [
     { name = "seaborn" },
     { name = "sentence-transformers" },
     { name = "streamlit" },
+    { name = "streamlit-markmap" },
     { name = "tenacity" },
     { name = "torch" },
     { name = "tqdm" },
@@ -1610,6 +1611,7 @@ requires-dist = [
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "sentence-transformers", specifier = ">=3.3.1" },
     { name = "streamlit", specifier = ">=1.41.1" },
+    { name = "streamlit-markmap", specifier = "==1.0.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
     { name = "torch", specifier = ">=2.5.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
@@ -3330,6 +3332,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/78/33/14b5ac0369ecf0af675911e5e84b934e6fcc2cec850857d2390eb373b0a6/streamlit-1.41.1.tar.gz", hash = "sha256:6626d32b098ba1458b71eebdd634c62af2dd876380e59c4b6a1e828a39d62d69", size = 8712473 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/87/b2e162869500062a94dde7589c167367b5538dab6eacce2e7c0f00d5c9c5/streamlit-1.41.1-py2.py3-none-any.whl", hash = "sha256:0def00822480071d642e6df36cd63c089f991da3a69fd9eb4ab8f65ce27de4e0", size = 9100386 },
+]
+
+[[package]]
+name = "streamlit-markmap"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/ac/bee231a7f8e39288744430839794ed813b6f4004082d46c07ebc5692eef6/streamlit-markmap-1.0.1.tar.gz", hash = "sha256:10d64358d016b624c9237d89afc62fc06d0a13f9d96a3c1859cb22016edc1237", size = 2507 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/5e/4ea83a5e33db0f0f2bf35ff3a84242b06eccb934696e6840d8634cb49479/streamlit_markmap-1.0.1-py3-none-any.whl", hash = "sha256:78e532f001da92a16a87823c29f02bf1906d3ba96c0b1d5b220a041f509ecada", size = 2485 },
 ]
 
 [[package]]
