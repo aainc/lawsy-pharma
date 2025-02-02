@@ -4,14 +4,15 @@ from pathlib import Path
 import dotenv
 import dspy
 import streamlit as st
-from loguru import logger
 from streamlit_markmap import markmap
+from loguru import logger
+
 
 from lawsy.app.utils.preload import (
     load_article_chunks,
     load_mindmap_maker,
     load_query_expander,
-    load_report_writer,
+    load_stream_report_writer,
     load_text_encoder,
     load_vector_search_retriever,
 )
@@ -37,7 +38,7 @@ gpt_4o_mini = dspy.LM(
     "openai/gpt-4o-mini", api_key=os.environ["OPENAI_API_KEY"], max_tokens=8192, temperature=0.01, cache=False
 )
 query_expander = load_query_expander(_lm=gpt_4o_mini)
-report_writer = load_report_writer(_lm=gpt_4o_mini)
+stream_report_writer = load_stream_report_writer(_lm=gpt_4o)
 mindmap_maker = load_mindmap_maker(_lm=gpt_4o_mini)
 rrf = RRF()
 
@@ -89,7 +90,7 @@ def lawsy_page():
                 chunk_dict = chunks[file_name, anchor]
                 article_title = get_article_title(chunk_dict)
                 st.write(f"[{i}] " + article_title)
-            # generate report
+            # prepare report
             status.update(label="writing report...")
             references = []
             seen = set()
@@ -107,19 +108,13 @@ def lawsy_page():
                 seen.add((file_name, anchor))
                 if len(seen) == 30:
                     break
-            report_writer_result = report_writer(
-                query=query, topics=query_expander_result.topics, references=references
-            )
+
             # complete
             status.update(label="complete", state="complete", expanded=False)
-        # make mindmap
-        mindmap = mindmap_maker(report_writer_result.report)
-        logger.info("mindmap: " + mindmap.mindmap)
 
         # show
-        markmap(mindmap.mindmap, height=400)
-        print(report_writer_result.report)
-        st.markdown(report_writer_result.report)
+        report_box = st.empty()
+        report_stream = stream_report_writer(query=query, topics=query_expander_result.topics, references=references)
         st.markdown("## References")
         for i, point in enumerate(search_result, start=1):
             file_name = point.meta["file_name"]  # type: ignore
@@ -135,6 +130,13 @@ def lawsy_page():
             # 負荷がかかるので一旦避けておく
             # st.components.v1.iframe(egov_url, height=500)  # type: ignore
             st.write("")
+        report_box.write_stream(report_stream)
+        # Mindmap
+        mindmap = mindmap_maker(stream_report_writer.get_text())
+        logger.info("mindmap: " + mindmap.mindmap)
+
+        # show
+        markmap(mindmap.mindmap, height=400)
 
 
 lawsy_page()

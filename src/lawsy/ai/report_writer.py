@@ -32,6 +32,7 @@ class StreamReportWriter:
     def __init__(self, lm) -> None:
         self.lm = lm
         self.write_report = dspy.Predict(WriteReport)
+        self.text = ""
 
     def __call__(self, query: str, topics: list, references: list[str]) -> Generator[str, None, None]:
         topics_text = "\n".join([f"- {topic}" for topic in topics])
@@ -65,6 +66,10 @@ class StreamReportWriter:
             yield buf
             text += buf
         logger.info("stream generation: " + text)
+        self.text=text
+        
+    def get_text(self):
+        return self.text
 
 
 class ReportWriter(dspy.Module):
