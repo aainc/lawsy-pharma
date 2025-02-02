@@ -66,8 +66,8 @@ class StreamReportWriter:
             yield buf
             text += buf
         logger.info("stream generation: " + text)
-        self.text=text
-        
+        self.text = text
+
     def get_text(self):
         return self.text
 

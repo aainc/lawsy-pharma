@@ -4,9 +4,8 @@ from pathlib import Path
 import dotenv
 import dspy
 import streamlit as st
-from streamlit_markmap import markmap
 from loguru import logger
-
+from streamlit_markmap import markmap
 
 from lawsy.app.utils.preload import (
     load_article_chunks,

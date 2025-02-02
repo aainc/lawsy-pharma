@@ -63,12 +63,14 @@ def load_report_writer(_lm) -> ReportWriter:
             st.session_state.report_writer = ReportWriter(lm=_lm)
     return st.session_state.report_writer
 
+
 def load_stream_report_writer(_lm) -> StreamReportWriter:
     if "stream_report_writer" not in st.session_state:
         with st.spinner("loading stream report writer..."):
             logger.info("loading stream report writer...")
             st.session_state.stream_report_writer = StreamReportWriter(lm=_lm)
     return st.session_state.stream_report_writer
+
 
 def load_mindmap_maker(_lm) -> MindMapMaker:
     if "mindmap_maker" not in st.session_state:
