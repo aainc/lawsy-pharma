@@ -6,7 +6,7 @@ import dotenv
 import streamlit as st
 from loguru import logger
 
-from lawsy.ai.make_mindmap import MindMapMaker
+from lawsy.ai.mindmap_maker import MindMapMaker
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
