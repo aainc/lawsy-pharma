@@ -5,9 +5,11 @@ import dotenv
 import dspy
 import streamlit as st
 from loguru import logger
+from streamlit_markmap import markmap
 
 from lawsy.app.utils.preload import (
     load_article_chunks,
+    load_mindmap_maker,
     load_query_expander,
     load_stream_report_writer,
     load_text_encoder,
@@ -36,6 +38,7 @@ gpt_4o_mini = dspy.LM(
 )
 query_expander = load_query_expander(_lm=gpt_4o_mini)
 stream_report_writer = load_stream_report_writer(_lm=gpt_4o)
+mindmap_maker = load_mindmap_maker(_lm=gpt_4o_mini)
 rrf = RRF()
 
 
@@ -127,6 +130,12 @@ def lawsy_page():
             # st.components.v1.iframe(egov_url, height=500)  # type: ignore
             st.write("")
         report_box.write_stream(report_stream)
+        # Mindmap
+        mindmap = mindmap_maker(stream_report_writer.get_text())
+        logger.info("mindmap: " + mindmap.mindmap)
+
+        # show
+        markmap(mindmap.mindmap, height=400)
 
 
 lawsy_page()

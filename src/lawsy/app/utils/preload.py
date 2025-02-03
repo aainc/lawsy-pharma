@@ -6,6 +6,7 @@ import dotenv
 import streamlit as st
 from loguru import logger
 
+from lawsy.ai.mindmap_maker import MindMapMaker
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
@@ -69,3 +70,11 @@ def load_stream_report_writer(_lm) -> StreamReportWriter:
             logger.info("loading stream report writer...")
             st.session_state.stream_report_writer = StreamReportWriter(lm=_lm)
     return st.session_state.stream_report_writer
+
+
+def load_mindmap_maker(_lm) -> MindMapMaker:
+    if "mindmap_maker" not in st.session_state:
+        with st.spinner("loading mindmap maker..."):
+            logger.info("loading mindmap maker...")
+            st.session_state.mindmap_maker = MindMapMaker(lm=_lm)
+    return st.session_state.mindmap_maker
