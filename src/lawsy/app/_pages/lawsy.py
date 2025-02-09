@@ -119,6 +119,7 @@ def lawsy_page():
 
         # show
         report_box = st.empty()
+        mindmap_box = st.empty()
         report_stream = stream_report_writer(query=query, topics=query_expander_result.topics, references=references)
         st.markdown("## References")
         for i, point in enumerate(search_result, start=1):
@@ -139,7 +140,8 @@ def lawsy_page():
         # Mindmap
         mindmap = mindmap_maker(stream_report_writer.get_text())
         logger.info("mindmap: " + mindmap.mindmap)
-        markmap(mindmap.mindmap, height=400)
+        with mindmap_box.container():
+            markmap(mindmap.mindmap, height=400)
 
 
 lawsy_page()
