@@ -10,6 +10,7 @@ from streamlit_markmap import markmap
 from lawsy.app.utils.preload import (
     load_article_chunks,
     load_mindmap_maker,
+    load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
     load_text_encoder,
@@ -37,7 +38,8 @@ gpt_4o_mini = dspy.LM(
     "openai/gpt-4o-mini", api_key=os.environ["OPENAI_API_KEY"], max_tokens=8192, temperature=0.01, cache=False
 )
 query_expander = load_query_expander(_lm=gpt_4o_mini)
-stream_report_writer = load_stream_report_writer(_lm=gpt_4o)
+outline_creater = load_outline_creater(_lm=gpt_4o_mini)
+stream_report_writer = load_stream_report_writer(_lm=gpt_4o_mini)
 mindmap_maker = load_mindmap_maker(_lm=gpt_4o_mini)
 rrf = RRF()
 
@@ -64,7 +66,7 @@ def lawsy_page():
             key2point = {}
             for expanded_query in expanded_queries:
                 query_vector = text_encoder.get_query_embeddings([expanded_query])[0]
-                hits = vector_search_retriever.search(query_vector, k=20)
+                hits = vector_search_retriever.search(query_vector, k=5)
                 run = {}
                 for point in hits:
                     file_name = point.meta["file_name"]  # type: ignore
@@ -107,13 +109,22 @@ def lawsy_page():
                 seen.add((file_name, anchor))
                 if len(seen) == 30:
                     break
+            # create outline
+            status.update(label="creating outline...")
+            outline_creater_result = outline_creater(
+                query=query, topics=query_expander_result.topics, references=references
+            )
+            st.write("generated outline:")
+            st.text(outline_creater_result.outline)
 
             # complete
             status.update(label="complete", state="complete", expanded=False)
 
         # show
         report_box = st.empty()
-        report_stream = stream_report_writer(query=query, topics=query_expander_result.topics, references=references)
+        report_stream = stream_report_writer(
+            query=query, outline=outline_creater_result.outline, references=references
+        )
         st.markdown("## References")
         for i, point in enumerate(search_result, start=1):
             file_name = point.meta["file_name"]  # type: ignore
@@ -130,6 +141,7 @@ def lawsy_page():
             # st.components.v1.iframe(egov_url, height=500)  # type: ignore
             st.write("")
         report_box.write_stream(report_stream)
+
         # Mindmap
         mindmap = mindmap_maker(stream_report_writer.get_text())
         logger.info("mindmap: " + mindmap.mindmap)
