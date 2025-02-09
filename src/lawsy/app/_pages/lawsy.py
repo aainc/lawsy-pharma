@@ -1,12 +1,11 @@
-import os
 from pathlib import Path
 
 import dotenv
-import dspy
 import streamlit as st
 from loguru import logger
 from streamlit_markmap import markmap
 
+from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.preload import (
     load_article_chunks,
     load_mindmap_maker,
@@ -32,13 +31,20 @@ def get_article_title(chunk_dict):
 chunks = load_article_chunks()
 text_encoder = load_text_encoder()
 vector_search_retriever = load_vector_search_retriever()
-gpt_4o = dspy.LM("openai/gpt-4o", api_key=os.environ["OPENAI_API_KEY"], max_tokens=8192, temperature=0.01, cache=False)
-gpt_4o_mini = dspy.LM(
-    "openai/gpt-4o-mini", api_key=os.environ["OPENAI_API_KEY"], max_tokens=8192, temperature=0.01, cache=False
-)
-query_expander = load_query_expander(_lm=gpt_4o_mini)
-stream_report_writer = load_stream_report_writer(_lm=gpt_4o)
-mindmap_maker = load_mindmap_maker(_lm=gpt_4o_mini)
+
+gpt_4o = "openai/gpt-4o"
+gpt_4o_mini = "openai/gpt-4o-mini"
+# gemini_pro = "vertex_ai/gemini-2.0-exp-02-05"
+# gemini_flash = "vertex_ai/gemini-2.0-flash-001"
+# gemini_flash_lite = "vertex_ai/gemini-2.0-flash-lite-preview-02-05"
+
+query_expander_lm = load_lm(gpt_4o_mini)
+query_expander = load_query_expander(_lm=query_expander_lm)
+report_writer_lm = load_lm(gpt_4o)
+stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
+mindmap_maker_lm = load_lm(gpt_4o_mini)
+mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
+
 rrf = RRF()
 
 
@@ -133,8 +139,6 @@ def lawsy_page():
         # Mindmap
         mindmap = mindmap_maker(stream_report_writer.get_text())
         logger.info("mindmap: " + mindmap.mindmap)
-
-        # show
         markmap(mindmap.mindmap, height=400)
 
 
