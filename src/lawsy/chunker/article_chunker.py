@@ -178,12 +178,16 @@ class ArticleChunker:
                 symbols.append("It_" + node.num)
         return "-".join(symbols)
 
-    def __call__(self, law: Law) -> Iterable[dict[str, str]]:
+    def __call__(self, law: Law) -> Iterable[dict]:
         article_paths = list_article_paths(law)
         for article_path in article_paths:
             anchor = self.get_article_path_anchor(article_path)
             try:
-                yield {"anchor": anchor, "chunk": get_article_path_string(article_path, indent=self.indent)}
+                yield {
+                    "anchor": anchor,
+                    "article_path": article_path,
+                    "chunk": get_article_path_string(article_path, indent=self.indent),
+                }
             except Exception:
                 import traceback
 

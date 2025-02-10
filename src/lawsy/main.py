@@ -25,8 +25,22 @@ def create_article_chunks(xml_dir: Path, output_jsonl_file: Path) -> None:
         xml_files = list(xml_dir.glob("**/*.xml"))
         for xml_file in tqdm(xml_files):
             law = parse_from_xml_file(xml_file)
+            law_title = law.law_body.law_title.text  # type: ignore
             for chunk in chunker(law):
-                print(json.dumps(dict(file_name=xml_file.stem, **chunk), ensure_ascii=False), file=fout)
+                article = chunk["article_path"][-1]
+                if chunk["anchor"].find("Mp-") >= 0:
+                    article_title = law_title + " 附則 " + article.article_title.text  # type: ignore
+                else:
+                    article_title = law_title + " " + article.article_title.text  # type: ignore
+                print(
+                    json.dumps(
+                        dict(
+                            file_name=xml_file.stem, anchor=chunk["anchor"], title=article_title, chunk=chunk["chunk"]
+                        ),
+                        ensure_ascii=False,
+                    ),
+                    file=fout,
+                )
                 count += 1
                 total_length += len(chunk["chunk"])
     avg_length = total_length / count if count > 0 else 0
@@ -81,19 +95,35 @@ def embed_article_chunks(input_jsonl_file: Path, output_parquet_file: Path, max_
 
 
 @app.command()
-def create_article_chunk_vector_index(input_parquet_file: Path, output_dir: Path) -> None:
+def create_article_chunk_vector_index(input_parquet_file: Path, input_chunks_file: Path, output_dir: Path) -> None:
+    import json
+
     import numpy as np
     import pyarrow.parquet as pq
+    from tqdm import tqdm
 
-    from lawsy.retriever.faiss import FaissHNSWRetriever
+    from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
 
     table = pq.read_table(input_parquet_file)
     file_names = table.column("file_name").to_pylist()
     anchors = table.column("anchor").to_pylist()
     embeddings = np.stack(table.column("embedding").to_numpy())
+    chunks = {}
+    with open(input_chunks_file) as fin:
+        for line in tqdm(fin):
+            chunk = json.loads(line)
+            chunks[chunk["file_name"], chunk["anchor"]] = chunk
     dim = embeddings.shape[1]
-    retriever = FaissHNSWRetriever.create(dim=dim)
-    meta_data = [{"file_name": file_name, "anchor": anchor} for file_name, anchor in zip(file_names, anchors)]
+    retriever = FaissHNSWArticleRetriever.create(dim=dim)
+    meta_data = [
+        {
+            "file_name": file_name,
+            "anchor": anchor,
+            "title": chunks[file_name, anchor]["title"],
+            "chunk": chunks[file_name, anchor]["chunk"],
+        }
+        for file_name, anchor in zip(file_names, anchors)
+    ]
     retriever.add(embeddings, meta_data)
     retriever.save(output_dir)
 

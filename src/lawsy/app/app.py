@@ -12,6 +12,11 @@ st.set_page_config(page_title="Lawsy", layout="wide")
 
 lawsy_page = st.Page("_pages/lawsy.py", title="Lawsy", icon=":material/bolt:")
 vector_search_page = st.Page("_pages/vector_search.py", title="Vector Search", icon=":material/search:")
+exp_lawsy_with_google_search_page = st.Page(
+    "_pages/exp_lawsy_with_google_search.py", title="Lawsy with Google Search", icon=":material/bolt:"
+)
 
-pg = st.navigation({"Main": [lawsy_page], "Components": [vector_search_page]})
+pg = st.navigation(
+    {"Main": [lawsy_page], "Components": [vector_search_page], "Experimental": [exp_lawsy_with_google_search_page]}
+)
 pg.run()

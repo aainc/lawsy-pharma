@@ -10,7 +10,8 @@ from lawsy.ai.mindmap_maker import MindMapMaker
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
-from lawsy.retriever.faiss import FaissHNSWRetriever
+from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
+from lawsy.retriever.web_search.googe_search import GoogleSearchWebRetriever
 
 dotenv.load_dotenv()
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
@@ -38,14 +39,22 @@ def load_text_encoder() -> ME5Instruct:
     return st.session_state.text_encoder
 
 
-def load_vector_search_retriever() -> FaissHNSWRetriever:
-    if "vector_search_retriever" not in st.session_state:
-        with st.spinner("loading vector search retriever..."):
-            logger.info("loading vector search retriever...")
-            st.session_state.vector_search_retriever = FaissHNSWRetriever.load(
+def load_vector_search_article_retriever() -> FaissHNSWArticleRetriever:
+    if "vector_search_article_retriever" not in st.session_state:
+        with st.spinner("loading vector search article retriever..."):
+            logger.info("loading vector search article retriever...")
+            st.session_state.vector_search_article_retriever = FaissHNSWArticleRetriever.load(
                 output_dir / "lawsy" / "article_chunks_faiss"
             )
-    return st.session_state.vector_search_retriever
+    return st.session_state.vector_search_article_retriever
+
+
+def load_google_search_web_retriever() -> GoogleSearchWebRetriever:
+    if "google_search_web_retriever" not in st.session_state:
+        with st.spinner("loading google search web retriever..."):
+            logger.info("loading google search web retriever...")
+            st.session_state.google_search_web_retriever = GoogleSearchWebRetriever()
+    return st.session_state.google_search_web_retriever
 
 
 def load_query_expander(_lm) -> QueryExpander:

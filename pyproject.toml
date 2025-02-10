@@ -10,6 +10,7 @@ dependencies = [
     "faiss-cpu>=1.9.0.post1",
     "ftfy>=6.3.1",
     "fugashi>=1.4.0",
+    "google-api-python-client>=2.159.0",
     "ja-law-parser>=0.3.0",
     "jupyterlab>=4.3.4",
     "loguru>=0.7.3",

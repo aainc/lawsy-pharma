@@ -6,6 +6,7 @@ PYTHON := python
 RUFF := ruff
 PYRIGHT := pyright
 HF_HOME := ./cache
+PREPROCESSED_DATA_VERSION := v20250211.0
 
 
 # Setup --------------------------------------------------------------------------
@@ -70,7 +71,7 @@ docker-login:
 
 
 lawsy-download-preprocessed-data:
-	@mkdir -p outputs && gcloud storage cp -r gs://885188444194-public-data/v20250126.0/lawsy ./outputs/
+	@mkdir -p outputs && gcloud storage cp -r gs://885188444194-public-data/${PREPROCESSED_DATA_VERSION}/lawsy ./outputs/
 
 
 lawsy-create-article-chunks:
@@ -82,7 +83,7 @@ lawsy-embed-article-chunks:
 
 
 lawsy-create-article-chunk-vector-index:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks_faiss
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks_faiss
 
 
 lawsy-prepare: lawsy-create-article-chunks lawsy-embed-article-chunks lawsy-create-article-chunk-vector-index
