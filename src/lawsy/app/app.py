@@ -15,8 +15,15 @@ vector_search_page = st.Page("_pages/vector_search.py", title="Vector Search", i
 exp_lawsy_with_google_search_page = st.Page(
     "_pages/exp_lawsy_with_google_search.py", title="Lawsy with Google Search", icon=":material/bolt:"
 )
+exp_lawsy_with_tavily_search_page = st.Page(
+    "_pages/exp_lawsy_with_tavily_search.py", title="Lawsy with Tavily Search", icon=":material/bolt:"
+)
 
 pg = st.navigation(
-    {"Main": [lawsy_page], "Components": [vector_search_page], "Experimental": [exp_lawsy_with_google_search_page]}
+    {
+        "Main": [lawsy_page],
+        "Components": [vector_search_page],
+        "Experimental": [exp_lawsy_with_google_search_page, exp_lawsy_with_tavily_search_page],
+    }
 )
 pg.run()

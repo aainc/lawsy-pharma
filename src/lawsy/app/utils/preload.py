@@ -11,7 +11,8 @@ from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
 from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
-from lawsy.retriever.web_search.googe_search import GoogleSearchWebRetriever
+from lawsy.retriever.web_search.google_search import GoogleSearchWebRetriever
+from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
 
 dotenv.load_dotenv()
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
@@ -55,6 +56,14 @@ def load_google_search_web_retriever() -> GoogleSearchWebRetriever:
             logger.info("loading google search web retriever...")
             st.session_state.google_search_web_retriever = GoogleSearchWebRetriever()
     return st.session_state.google_search_web_retriever
+
+
+def load_tavily_search_web_retriever() -> TavilySearchWebRetriever:
+    if "tavily_search_web_retriever" not in st.session_state:
+        with st.spinner("loading tavily search web retriever..."):
+            logger.info("loading tavily search web retriever...")
+            st.session_state.tavily_search_web_retriever = TavilySearchWebRetriever()
+    return st.session_state.tavily_search_web_retriever
 
 
 def load_query_expander(_lm) -> QueryExpander:
