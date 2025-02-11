@@ -26,7 +26,6 @@ class GoogleSearchWebRetriever:
         while len(results) < k and len(results) < total_results:
             request = service.cse().list(q=query, cx=self.cse_id, lr=lr, num=10, start=start)
             response = request.execute()
-            start = response["queries"]["nextPage"][0]["startIndex"]
             total_results = int(response["queries"]["request"][0]["totalResults"])
             results.extend(
                 [
@@ -34,4 +33,7 @@ class GoogleSearchWebRetriever:
                     for item in response["items"]
                 ]
             )
+            if "nextPage" not in response["queries"]:
+                break
+            start = response["queries"]["nextPage"][0]["startIndex"]
         return results[:k]
