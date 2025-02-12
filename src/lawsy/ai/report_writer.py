@@ -1,6 +1,6 @@
 import concurrent.futures
 import os
-from typing import Generator
+from typing import Generator, Optional
 
 import dspy
 from loguru import logger
@@ -53,7 +53,7 @@ class StreamReportWriter:
         self.write_section = dspy.Predict(WriteSection)
         self.write_conclusion = dspy.Predict(WriteConclusion)
         self.write_lead = dspy.Predict(WriteLead)
-        self.max_thread_num = min(20, os.cpu_count() * 2)
+        self.max_thread_num = min(20, (os.cpu_count() or 5) * 2)
         self.text = ""
 
     def _split_outline(self, outline: str):
@@ -121,11 +121,11 @@ class StreamReportWriter:
 
 
 class ReportWriter(dspy.Module):
-    def __init__(self, lm, max_thread_num: int = None) -> None:
+    def __init__(self, lm, max_thread_num: Optional[int] = None) -> None:
         self.lm = lm
         # CPU数に応じた最大スレッド数の設定（明示的に指定がない場合）
         if max_thread_num is None:
-            self.max_thread_num = min(20, os.cpu_count() * 2)
+            self.max_thread_num = min(20, (os.cpu_count() or 5) * 2)
         else:
             self.max_thread_num = max_thread_num
         # 各セクション・結論・リード生成用のPredictを初期化
