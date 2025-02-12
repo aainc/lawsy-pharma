@@ -57,9 +57,6 @@ class StreamReportWriter:
         self.text = ""
 
     def _split_outline(self, outline: str):
-        """
-        アウトライン文字列から、全体タイトル（先頭の "# Title"）と各セクション（"## Title"～以降）を抽出します。
-        """
         lines = outline.splitlines()
         overall_title = ""
         sections = []
@@ -96,15 +93,30 @@ class StreamReportWriter:
         lead_text = lead_result.lead
         yield lead_text + "\n"
 
-        # 各セクションを順次生成してyieldする
+        # 各セクションを並列処理で生成
+        section_results = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
+            future_to_idx = {
+                executor.submit(self._generate_section, query, references_text, sec_outline): idx
+                for idx, sec_outline in enumerate(sections)
+            }
+
+            for future in concurrent.futures.as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                try:
+                    section_results[idx] = future.result()
+                except Exception as exc:
+                    section_results[idx] = f"Error in section {idx}: {exc}"
+
+        # 順序通りにセクションを `yield` していく
         report_sections = ""
-        for idx, sec_outline in enumerate(sections):
-            section_text = self._generate_section(query, references_text, sec_outline)
+        for idx in sorted(section_results.keys()):
+            section_text = section_results[idx]
             report_sections += section_text + "\n"
-            yield section_text + "\n"  # セクション生成後に逐次出力
+            yield section_text + "\n"
 
         # 結論生成
-        report_draft = overall_title + "\n" + lead_text + "\n" + report_sections
+        report_draft = overall_title + "\n" + lead_text + "\n" + report_sections + "\n"
         with dspy.settings.context(lm=self.lm):
             concl_result = self.write_conclusion(query=query, report_draft=report_draft)
         conclusion_text = concl_result.conclusion
@@ -158,13 +170,6 @@ class ReportWriter(dspy.Module):
         return result.section
 
     def forward(self, query: str, outline: str, references: list[str]) -> dspy.Prediction:
-        """
-        1. topicsリストから Markdownアウトラインを自動生成する。
-        2. アウトラインを解析して、全体タイトルと各セクションのアウトラインに分割する。
-        3. 並列処理により各セクションを生成する。
-        4. 各セクションを統合した本文から、結論を生成する。
-        5. 結論を含む下書きをもとにリード文を生成し、全体レポートを組み立てる。
-        """
         references_text = "\n\n".join(references)
         overall_title, sections = self._split_outline(outline)
 
