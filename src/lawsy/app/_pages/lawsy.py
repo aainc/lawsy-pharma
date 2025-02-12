@@ -8,6 +8,7 @@ from streamlit_markmap import markmap
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.preload import (
     load_mindmap_maker,
+    load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
     load_text_encoder,
@@ -87,6 +88,13 @@ def lawsy_page():
                 seen.add((result.rev_id, result.anchor))
                 if len(seen) == 30:
                     break
+            # create outline
+            status.update(label="creating outline...")
+            outline_creater_result = outline_creater(
+                query=query, topics=query_expander_result.topics, references=references
+            )
+            st.write("generated outline:")
+            st.text(outline_creater_result.outline)
 
             # complete
             status.update(label="complete", state="complete", expanded=False)
@@ -105,6 +113,7 @@ def lawsy_page():
             # st.components.v1.iframe(result.url, height=500)  # type: ignore
             st.write("")
         report_box.write_stream(report_stream)
+
         # Mindmap
         mindmap = mindmap_maker(stream_report_writer.get_text())
         logger.info("mindmap: " + mindmap.mindmap)
