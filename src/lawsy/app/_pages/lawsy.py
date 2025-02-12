@@ -63,7 +63,7 @@ def lawsy_page():
             key2result = {}
             for expanded_query in expanded_queries:
                 query_vector = text_encoder.get_query_embeddings([expanded_query])[0]
-                hits = vector_search_article_retriever.search(query_vector, k=5)
+                hits = vector_search_article_retriever.search(query_vector, k=10)
                 run = {}
                 for result in hits:
                     key = (result.law_id, result.anchor)

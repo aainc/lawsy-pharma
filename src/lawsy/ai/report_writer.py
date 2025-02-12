@@ -1,6 +1,7 @@
 import concurrent.futures
 import os
 from typing import Generator, Optional
+import re
 
 import dspy
 from loguru import logger
@@ -36,8 +37,7 @@ class WriteSection(dspy.Signature):
 
 
 class WriteConclusion(dspy.Signature):
-    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。
-    レポートのドラフトを踏まえて、レポート全体の結論（テーマを明確にし、背景を説明し、その話題がなぜ重要なのかを提示、最も重要なポイントや主要な論争があれば要約）と今後の方向性やユーザーの取るべきネクストアクションを生成します。最低でも400字以上、可能なら600字以上記載してください。
+    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。レポートのドラフトを踏まえて、レポート全体の要約を本文とはできるだけ異なる表現で記載しつつ、今後の方向性や対応策を生成します。最低でも400字以上、可能なら600字以上記載してください。
     そして、生成したconclusionの冒頭に"## 結論"という行を追記してください。
     """
 
@@ -75,29 +75,59 @@ class StreamReportWriter:
             sections.append("\n".join(current_section))
         return overall_title, sections
 
-    def _generate_section(self, query: str, references_text: str, section_outline: str) -> str:
+    def _parse_references(self, references: list[str]) -> dict[int, str]:
+        """リファレンスリストを {番号: 内容} の辞書に変換"""
+        references_dict = {}
+        for ref in references:
+            match = re.match(r"\[(\d+)\]\s*(.+)", ref, re.DOTALL)
+            if match:
+                ref_num = int(match.group(1))  # 例: "[1]" → 1
+                ref_content = match.group(2)   # 例: "公共工事の入札..."
+                references_dict[ref_num] = f"[{ref_num}] {match.group(2)}"
+        return references_dict
+
+    def _extract_references_from_outline(self, section_outline: str) -> list[int]:
+        """セクションのアウトラインから引用番号を抽出"""
+        reference_ids = list(map(int, re.findall(r'\[(\d+)\]', section_outline)))
+        return reference_ids
+        
+    def _generate_section(self, query: str, references_dict: dict[int, str], section_outline: str) -> str:
+        """該当するリファレンスのみを参照してセクションを生成"""
+        # 1. セクション内で実際に使われている引用番号を抽出
+        reference_ids = self._extract_references_from_outline(section_outline)
+        
+        # 2. 必要なリファレンスのみを選別
+        filtered_references = "\n\n".join([references_dict[rid] for rid in reference_ids if rid in references_dict])
+
+        # 3. dspy を用いてセクションを生成
         with dspy.settings.context(lm=self.lm):
-            result = self.write_section(query=query, references=references_text, section_outline=section_outline)
+            result = self.write_section(query=query, references=filtered_references, section_outline=section_outline)
+        
         return result.section
 
     def __call__(self, query: str, outline: str, references: list[str]) -> Generator[str, None, None]:
-        references_text = "\n\n".join(references)
+        """ストリーミングでレポートを生成"""
+        
+        # 1. リファレンスを {番号: 内容} の辞書に変換
+        references_dict = self._parse_references(references)
+
+        # 2. アウトラインを分割
         overall_title, sections = self._split_outline(outline)
 
-        # 最初に全体タイトルをyield
+        # 3. 最初に全体タイトルをyield
         yield overall_title + "\n"
 
-        # リード文を生成してyieldする
+        # 4. リード文を生成してyieldする
         with dspy.settings.context(lm=self.lm):
             lead_result = self.write_lead(query=query, outline=outline)
         lead_text = lead_result.lead
         yield lead_text + "\n"
 
-        # 各セクションを並列処理で生成
+        # 5. 各セクションを並列処理で生成
         section_results = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
             future_to_idx = {
-                executor.submit(self._generate_section, query, references_text, sec_outline): idx
+                executor.submit(self._generate_section, query, references_dict, sec_outline): idx
                 for idx, sec_outline in enumerate(sections)
             }
 
@@ -108,25 +138,24 @@ class StreamReportWriter:
                 except Exception as exc:
                     section_results[idx] = f"Error in section {idx}: {exc}"
 
-        # 順序通りにセクションを `yield` していく
+        # 6. 順序通りにセクションを `yield` していく
         report_sections = ""
         for idx in sorted(section_results.keys()):
             section_text = section_results[idx]
             report_sections += section_text + "\n"
             yield section_text + "\n"
 
-        # 結論生成
+        # 7. 結論生成
         report_draft = overall_title + "\n" + lead_text + "\n" + report_sections + "\n"
         with dspy.settings.context(lm=self.lm):
             concl_result = self.write_conclusion(query=query, report_draft=report_draft)
         conclusion_text = concl_result.conclusion
         yield conclusion_text + "\n"
 
-        # 最終レポートの完成
+        # 8. 最終レポートの完成
         final_report = report_draft + "\n" + conclusion_text
         self.text = final_report
         logger.info("stream generation: " + final_report)
-        # yield final_report + "\n"
 
     def get_text(self):
         return self.text
@@ -164,24 +193,54 @@ class ReportWriter(dspy.Module):
             sections.append("\n".join(current_section))
         return overall_title, sections
 
-    def _generate_section(self, query: str, references_text: str, section_outline: str) -> str:
+    def _parse_references(references: list[str]) -> dict[int, str]:
+        """リファレンスリストを {番号: 内容} の辞書に変換"""
+        references_dict = {}
+        for ref in references:
+            match = re.match(r"\[(\d+)\]\s*(.+)", ref, re.DOTALL)
+            if match:
+                ref_num = int(match.group(1))  # 例: "[1]" → 1
+                ref_content = match.group(2)   # 例: "公共工事の入札及び..."
+                references_dict[ref_num] = f"[{ref_num}] {match.group(2)}"
+        return references_dict
+
+    def _extract_references_from_outline(section_outline: str) -> list[int]:
+        """セクションのアウトラインから引用番号を抽出"""
+        return list(map(int, re.findall(r'\[(\d+)\]', section_outline)))
+
+    def _generate_section(self, query: str, references_dict: dict[int, str], section_outline: str) -> str:
+        """該当するリファレンスのみを参照してセクションを生成"""
+        # 1. セクション内で実際に使われている引用番号を抽出
+        reference_ids = _extract_references_from_outline(section_outline)
+        
+        # 2. 必要なリファレンスのみを選別
+        filtered_references = "\n\n".join([references_dict[rid] for rid in reference_ids if rid in references_dict])
+
+        # 3. dspy を用いてセクションを生成
         with dspy.settings.context(lm=self.lm):
-            result = self.write_section(query=query, references=references_text, section_outline=section_outline)
+            result = self.write_section(query=query, references=filtered_references, section_outline=section_outline)
+        
         return result.section
 
     def forward(self, query: str, outline: str, references: list[str]) -> dspy.Prediction:
-        references_text = "\n\n".join(references)
+        """各セクションのリファレンスを適切に絞り込んで処理を並列化"""
+        
+        # 1. リファレンスを {番号: 内容} の辞書に変換
+        references_dict = _parse_references(references)
+
+        # 2. アウトラインを分割
         overall_title, sections = self._split_outline(outline)
 
-        # アウトラインを踏まえてリード文を生成
+        # 3. リード文を生成
         with dspy.settings.context(lm=self.lm):
             lead_result = self.write_lead(query=query, outline=outline)
         lead_text = lead_result.lead
 
+        # 4. 各セクションを並列処理
         section_results = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
             future_to_idx = {
-                executor.submit(self._generate_section, query, references_text, sec_outline): idx
+                executor.submit(self._generate_section, query, references_dict, sec_outline): idx
                 for idx, sec_outline in enumerate(sections)
             }
             for future in concurrent.futures.as_completed(future_to_idx):
@@ -191,20 +250,16 @@ class ReportWriter(dspy.Module):
                 except Exception as exc:
                     section_results[idx] = f"Error in section {idx}: {exc}"
 
-        # 順序通りに各セクションの生成結果を連結
-        report_sections = ""
-        for idx in sorted(section_results.keys()):
-            report_sections += section_results[idx] + "\n"
+        # 5. 順序通りに各セクションの生成結果を連結
+        report_sections = "\n".join(section_results[idx] for idx in sorted(section_results.keys()))
+        report_draft = f"{overall_title}\n{lead_text}\n{report_sections}"
 
-        # 全体タイトル、リード文、本文を連結してドラフトとする
-        report_draft = overall_title + "\n" + lead_text + "\n" + report_sections
-
-        # 統合した各セクションを元に結論を生成
+        # 6. 結論を生成
         with dspy.settings.context(lm=self.lm):
             concl_result = self.write_conclusion(query=query, report_draft=report_draft)
         conclusion_text = concl_result.conclusion
 
-        # ドラフトに結論を追加して最終レポートとする
-        final_report = report_draft + "\n" + conclusion_text
+        # 7. 最終レポート作成
+        final_report = f"{report_draft}\n{conclusion_text}"
 
         return dspy.Prediction(report=final_report)
