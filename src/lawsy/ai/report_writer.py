@@ -6,6 +6,14 @@ import dspy
 from loguru import logger
 
 
+class WriteLead(dspy.Signature):
+    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。下記のクエリーに関する調査をしており、クエリーをもとにレポートのアウトラインを作成しました。アウトラインをもとに、レポート全体でどのような展開がなされるか、簡潔なリード文を作成してください。
+"""
+
+    query = dspy.InputField(desc="クエリー", format=str)
+    outline = dspy.InputField(desc="レポート全体のアウトライン", format=str)
+    lead = dspy.OutputField(desc="生成されたリード文", format=str)
+
 class WriteSection(dspy.Signature):
     """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。下記のクエリーに関する調査をしており、クエリーをもとにレポートのアウトラインを作成しました。
     アウトラインの中にある引用番号をもとに、収集された情報源の条文を適切に参照しながら各セクションの内容を記載してください。必ず各サブセクションごとに400字以上記載してください。解説は緻密かつ包括的で情報量が多く、情報源に基づいたものであることが望ましいです。法令に詳しくない人向けにわかりやすくかみ砕いて説明することも重要です。必要に応じて、用いている法令の概要、関連法規、適切な事例、歴史的背景、最新の判例などを盛り込んでください。
@@ -29,20 +37,13 @@ class WriteSection(dspy.Signature):
 
 class WriteConclusion(dspy.Signature):
     """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。
-    統合した各セクションを踏まえて、レポート全体の結論と今後の方向性やネクストアクションを生成します。
-    そして、生成したconclusionの冒頭に"## 結論"という行を追記してください。"""
+    レポートのドラフトを踏まえて、レポート全体の結論（テーマを明確にし、背景を説明し、その話題がなぜ重要なのかを提示、最も重要なポイントや主要な論争があれば要約）と今後の方向性やユーザーの取るべきネクストアクションを生成します。最低でも400字以上、可能なら600字以上記載してください。
+    そして、生成したconclusionの冒頭に"## 結論"という行を追記してください。
+    """
 
     query = dspy.InputField(desc="クエリー", format=str)
-    report_sections = dspy.InputField(desc="統合した各セクションの文章", format=str)
+    report_draft = dspy.InputField(desc="レポートのドラフト", format=str)
     conclusion = dspy.OutputField(desc="生成された結論", format=str)
-
-
-class WriteLead(dspy.Signature):
-    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。統合した最終レポート全体を踏まえて、レポートのリード文を生成します。最低でも400字以上、可能なら600字以上記載し、ドラフトに追記してください。なお、リードセクションは記事の簡潔な概要として独立して成り立つものにすること（テーマを明確にし、背景を説明し、その話題がなぜ重要なのかを提示、最も重要なポイントや主要な論争があれば要約）"""
-
-    query = dspy.InputField(desc="クエリー", format=str)
-    report_draft = dspy.InputField(desc="統合したレポート本文（結論含む）", format=str)
-    lead = dspy.OutputField(desc="生成されたリード文", format=str)
 
 
 # dspyのstreamifyはstreamlitと相性が悪いようでうまく動かなかったので独自にstream出力を実装
@@ -89,6 +90,12 @@ class StreamReportWriter:
         # 最初に全体タイトルをyield
         yield overall_title + "\n"
 
+        # リード文を生成してyieldする
+        with dspy.settings.context(lm=self.lm):
+            lead_result = self.write_lead(query=query, outline=outline)
+        lead_text = lead_result.lead
+        yield lead_text + "\n"
+
         # 各セクションを順次生成してyieldする
         report_sections = ""
         for idx, sec_outline in enumerate(sections):
@@ -97,20 +104,14 @@ class StreamReportWriter:
             yield section_text + "\n"  # セクション生成後に逐次出力
 
         # 結論生成
+        report_draft = overall_title + "\n" + lead_text + "\n" + report_sections
         with dspy.settings.context(lm=self.lm):
-            concl_result = self.write_conclusion(query=query, report_sections=report_sections)
+            concl_result = self.write_conclusion(query=query, report_draft=report_draft)
         conclusion_text = concl_result.conclusion
-        yield conclusion_text + "\n"  # 結論生成後に出力
-
-        # 下書き（セクション＋結論）を元にリード文生成
-        report_draft = report_sections + "\n" + conclusion_text
-        with dspy.settings.context(lm=self.lm):
-            lead_result = self.write_lead(query=query, report_draft=report_draft)
-        lead_text = lead_result.lead
-        yield lead_text + "\n"  # リード文生成後に出力
+        yield conclusion_text + "\n"
 
         # 最終レポートの完成
-        final_report = overall_title + "\n" + lead_text + "\n" + report_draft
+        final_report = report_draft + "\n" + conclusion_text
         self.text = final_report
         logger.info("stream generation: " + final_report)
         # yield final_report + "\n"
@@ -167,6 +168,11 @@ class ReportWriter(dspy.Module):
         references_text = "\n\n".join(references)
         overall_title, sections = self._split_outline(outline)
 
+        # アウトラインを踏まえてリード文を生成
+        with dspy.settings.context(lm=self.lm):
+            lead_result = self.write_lead(query=query, outline=outline)
+        lead_text = lead_result.lead
+
         section_results = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
             future_to_idx = {
@@ -185,20 +191,15 @@ class ReportWriter(dspy.Module):
         for idx in sorted(section_results.keys()):
             report_sections += section_results[idx] + "\n"
 
+        # 全体タイトル、リード文、本文を連結してドラフトとする
+        report_draft = overall_title + "\n" + lead_text + "\n" + report_sections
+
         # 統合した各セクションを元に結論を生成
         with dspy.settings.context(lm=self.lm):
-            concl_result = self.write_conclusion(query=query, report_sections=report_sections)
+            concl_result = self.write_conclusion(query=query, report_draft=report_draft)
         conclusion_text = concl_result.conclusion
 
-        # 結論を含む下書きの本文を作成
-        report_draft = report_sections + "\n" + conclusion_text
-
-        # 下書きを踏まえてリード文を生成
-        with dspy.settings.context(lm=self.lm):
-            lead_result = self.write_lead(query=query, report_draft=report_draft)
-        lead_text = lead_result.lead
-
-        # 全体タイトル、リード文、本文を連結して最終レポートとする
-        final_report = overall_title + "\n" + lead_text + "\n" + report_draft
+        # ドラフトに結論を追加して最終レポートとする
+        final_report = report_draft + "\n" + conclusion_text
 
         return dspy.Prediction(report=final_report)

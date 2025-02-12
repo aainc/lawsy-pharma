@@ -31,7 +31,9 @@ gpt_4o_mini = "openai/gpt-4o-mini"
 
 query_expander_lm = load_lm(gpt_4o_mini)
 query_expander = load_query_expander(_lm=query_expander_lm)
-report_writer_lm = load_lm(gpt_4o)
+outline_creater_lm = load_lm(gpt_4o_mini)
+outline_creater = load_outline_creater(_lm=outline_creater_lm)
+report_writer_lm = load_lm(gpt_4o_mini)
 stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
 mindmap_maker_lm = load_lm(gpt_4o_mini)
 mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
@@ -102,7 +104,7 @@ def lawsy_page():
         # show
         report_box = st.empty()
         mindmap_box = st.empty()
-        report_stream = stream_report_writer(query=query, topics=query_expander_result.topics, references=references)
+        report_stream = stream_report_writer(query=query, outline=outline_creater_result.outline, references=references)
         st.markdown("## References")
         for i, result in enumerate(search_results, start=1):
             st.write(f"[{i}] " + result.title)
