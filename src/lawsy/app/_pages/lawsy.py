@@ -63,7 +63,7 @@ def lawsy_page():
             key2result = {}
             for expanded_query in expanded_queries:
                 query_vector = text_encoder.get_query_embeddings([expanded_query])[0]
-                hits = vector_search_article_retriever.search(query_vector, k=20)
+                hits = vector_search_article_retriever.search(query_vector, k=5)
                 run = {}
                 for result in hits:
                     key = (result.law_id, result.anchor)
@@ -102,8 +102,15 @@ def lawsy_page():
             status.update(label="complete", state="complete", expanded=False)
 
         # show
-        report_box = st.empty()
+        # Mindmap
         mindmap_box = st.empty()
+        # mindmap = mindmap_maker(stream_report_writer.get_text())
+        # logger.info("mindmap: " + mindmap.mindmap)
+        with mindmap_box.container():
+            markmap(outline_creater_result.outline, height=400)
+
+        # Report
+        report_box = st.empty()
         report_stream = stream_report_writer(
             query=query, outline=outline_creater_result.outline, references=references
         )
@@ -117,12 +124,6 @@ def lawsy_page():
             # st.components.v1.iframe(result.url, height=500)  # type: ignore
             st.write("")
         report_box.write_stream(report_stream)
-
-        # Mindmap
-        mindmap = mindmap_maker(stream_report_writer.get_text())
-        logger.info("mindmap: " + mindmap.mindmap)
-        with mindmap_box.container():
-            markmap(mindmap.mindmap, height=400)
 
 
 lawsy_page()
