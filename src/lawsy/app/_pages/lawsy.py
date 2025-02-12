@@ -104,7 +104,9 @@ def lawsy_page():
         # show
         report_box = st.empty()
         mindmap_box = st.empty()
-        report_stream = stream_report_writer(query=query, outline=outline_creater_result.outline, references=references)
+        report_stream = stream_report_writer(
+            query=query, outline=outline_creater_result.outline, references=references
+        )
         st.markdown("## References")
         for i, result in enumerate(search_results, start=1):
             st.write(f"[{i}] " + result.title)
