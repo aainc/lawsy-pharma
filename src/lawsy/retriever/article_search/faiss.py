@@ -38,6 +38,7 @@ class FaissHNSWArticleRetriever:
 
     def search(self, vec: npt.NDArray[np.float32], k: int) -> list[ArticleSearchResult]:
         vec = vec / np.linalg.norm(vec)
+        vec = vec[: self.vector_dim]
         cossims, indexs = self.index.search(vec.reshape(1, -1), k=k)  # type: ignore
         results = []
         for i, cossim in zip(indexs[0], cossims[0]):

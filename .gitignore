@@ -174,4 +174,5 @@ cython_debug/
 data/
 outputs/
 .env
+sa.json
 cache/

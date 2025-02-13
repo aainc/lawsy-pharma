@@ -17,10 +17,13 @@ make install
 
 ## Create .env file
 
-Create .env file and put it on the repository root directory.
+Create .env file and put it in the repository root directory.
 
 ```text
-OPENAI_API_KEY=...
+OUTPUT_DIR=./outputs  # output directory in which processed data are placed
+HISTORY_BUCKET_NAME=885188444194-history  #  GCP bucket to store history data
+OPENAI_API_KEY=<<your api key>>
+TAVILY_API_KEY=<<your api key>>
 ```
 
 ## Run App
@@ -34,6 +37,7 @@ make lawsy-download-preprocessed-data
 ### Run
 
 ```shell
+make gcloud-application-default-login  # if you haven't logged in Google Cloud
 make lawsy-run-app
 ```
 
