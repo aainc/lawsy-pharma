@@ -64,6 +64,13 @@ def create_lawsy_page(report: Report | None = None):
 
         if not clicked and report is not None:
             logger.info("reproduce previous report")
+            with st.status("complete"):
+                st.write("generated topics:")
+                for i, topic in enumerate(report.topics, start=1):
+                    st.write(f"[{i}] {topic}")
+                st.write(f"found {len(report.references)} sources:")
+                for i, result in enumerate(report.references, start=1):
+                    st.write(f"[{i}] " + result.title)
             # show
             st.write(report.report_content)
             markmap(report.mindmap, height=400)
@@ -178,7 +185,8 @@ def create_lawsy_page(report: Report | None = None):
                 title=title,
                 report_content=report_content,
                 mindmap=mindmap.mindmap,
-                references=search_results,
+                references=search_results,  # reference = search result for now
+                search_results=search_results,
             )
             new_report.save(user_id=user_id)
             PAGES[new_report.id] = st.Page(

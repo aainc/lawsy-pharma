@@ -31,7 +31,7 @@ for report in history:
     PAGES[report.id] = st.Page(create_lawsy_page(report), title=report.title, url_path=report.id)
 
 pages = {
-    "New": [st.Page(create_lawsy_page(), title="Create New", url_path="new", icon=":material/edit_square:")],
+    "New": [st.Page(create_lawsy_page(), title="New Research", url_path="new", icon=":material/edit_square:")],
     "History": [PAGES[report.id] for report in history],
 }
 pg = st.navigation(pages, expanded=True)

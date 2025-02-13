@@ -20,12 +20,14 @@ class Report(BaseModel):
     report_content: str
     mindmap: str
     references: list[SearchResultType]
+    search_results: list[SearchResultType]
 
     @staticmethod
     def from_dict(d: dict) -> "Report":
         d = d.copy()
         references = [to_search_result(dd) for dd in d.pop("references")]
-        return Report(**d, references=references)
+        search_results = [to_search_result(dd) for dd in d.pop("search_results")]
+        return Report(**d, references=references, search_results=search_results)
 
     def to_dict(self) -> dict:
         return dict(
@@ -37,6 +39,7 @@ class Report(BaseModel):
             report_content=self.report_content,
             mindmap=self.mindmap,
             references=[reference.model_dump(mode="json") for reference in self.references],
+            search_results=[search_result.model_dump(mode="json") for search_result in self.search_results],
         )
 
     def save(self, user_id: str) -> None:
