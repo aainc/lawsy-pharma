@@ -85,7 +85,7 @@ lawsy-embed-article-chunks:
 
 
 lawsy-create-article-chunk-vector-index:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks_faiss
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks_faiss --dim ${ENCODER_DIM}
 
 
 lawsy-prepare: lawsy-create-article-chunks lawsy-embed-article-chunks lawsy-create-article-chunk-vector-index

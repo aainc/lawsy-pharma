@@ -119,7 +119,7 @@ def create_article_chunk_vector_index(
     import pyarrow.parquet as pq
     from tqdm import tqdm
 
-    from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
+    from lawsy.retriever.article_search.faiss import FaissFlatArticleRetriever
 
     assert dim is None or dim > 0
 
@@ -136,7 +136,7 @@ def create_article_chunk_vector_index(
         for line in tqdm(fin):
             chunk = json.loads(line)
             chunks[chunk["file_name"], chunk["anchor"]] = chunk
-    retriever = FaissHNSWArticleRetriever.create(dim=dim)
+    retriever = FaissFlatArticleRetriever.create(dim=dim)
     meta_data = [
         {
             "file_name": file_name,
