@@ -13,8 +13,10 @@ RUN uv sync
 ENV PATH="/app/.venv/bin:$PATH"
 
 ENV HF_HOME="/app/cache/"
-COPY ./cache/hub/models--intfloat--multilingual-e5-large-instruct /app/cache/hub/models--intfloat--multilingual-e5-large-instruct
+# uncomment if you use ME5 model
+# COPY ./cache/hub/models--intfloat--multilingual-e5-large-instruct /app/cache/hub/models--intfloat--multilingual-e5-large-instruct
 COPY .env /app/.env
+COPY sa.json /app/sa.json
 COPY ./outputs/lawsy/article_chunks.jsonl /app/outputs/lawsy/article_chunks.jsonl
 COPY ./outputs/lawsy/article_chunks_faiss /app/outputs/lawsy/article_chunks_faiss
 

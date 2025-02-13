@@ -12,6 +12,7 @@ class BaseSearchResult(BaseModel):
     title: str
     snippet: str
     score: Optional[float] = None
+    url: HttpUrl | str  # (ugly fix) str is added to prevent https://github.com/pydantic/pydantic/issues/1684
     meta: dict
 
     def to_dict(self) -> dict:
@@ -23,11 +24,20 @@ class ArticleSearchResult(BaseSearchResult):
     law_id: str
     rev_id: str  # xxx_xxx_xxx
     anchor: str
-    url: HttpUrl | str  # (ugly fix) str is added to prevent https://github.com/pydantic/pydantic/issues/1684
 
 
 class WebSearchResult(BaseSearchResult):
     source_type: Optional[SourceType] = "web"
-    url: HttpUrl | str  # (ugly fix) str is added to prevent https://github.com/pydantic/pydantic/issues/1684
-
     full_content: Optional[str] = None
+
+
+def to_search_result(data: dict) -> ArticleSearchResult | WebSearchResult:
+    if "source_type" not in data:
+        raise ValueError("data has no source_type")
+    source_type = data["source_type"]
+    if source_type == "article":
+        return ArticleSearchResult(**data)
+    elif source_type == "web":
+        return WebSearchResult(**data)
+    else:
+        raise ValueError(f"invalid source_type: {source_type}")

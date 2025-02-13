@@ -32,6 +32,10 @@ class FaissHNSWArticleRetriever:
             self.index = faiss.IndexHNSWFlat(dim, m, faiss.METRIC_INNER_PRODUCT)
             self.meta_data = []
 
+    @property
+    def vector_dim(self) -> int:
+        return self.index.d
+
     def search(self, vec: npt.NDArray[np.float32], k: int) -> list[ArticleSearchResult]:
         vec = vec / np.linalg.norm(vec)
         cossims, indexs = self.index.search(vec.reshape(1, -1), k=k)  # type: ignore

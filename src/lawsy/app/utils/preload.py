@@ -11,6 +11,7 @@ from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
+from lawsy.encoder.openai import OpenAITextEmbedding
 from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
 from lawsy.retriever.web_search.google_search import GoogleSearchWebRetriever
 from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
@@ -33,11 +34,16 @@ def load_article_chunks() -> dict:
     return st.session_state.article_chunks
 
 
-def load_text_encoder() -> ME5Instruct:
+def load_text_encoder(dim: int | None = None) -> ME5Instruct | OpenAITextEmbedding:
     if "text_encoder" not in st.session_state:
         with st.spinner("loading text encoder..."):
             logger.info("loading text encoder...")
-            st.session_state.text_encoder = ME5Instruct()
+            model_name = os.getenv("ENCODER_MODEL_NAME")
+            prefix = model_name.split("/")[0] if model_name is not None else None
+            if model_name is None or prefix == "openai":
+                st.session_state.text_encoder = OpenAITextEmbedding(dim=dim)
+            else:
+                st.session_state.text_encoder = ME5Instruct()
     return st.session_state.text_encoder
 
 
