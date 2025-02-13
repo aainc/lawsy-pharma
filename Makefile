@@ -6,7 +6,9 @@ PYTHON := python
 RUFF := ruff
 PYRIGHT := pyright
 HF_HOME := ./cache
-PREPROCESSED_DATA_VERSION := v20250211.0
+ENCODER_MODEL_NAME := openai/text-embedding-3-small
+ENCODER_DIM := 512
+PREPROCESSED_DATA_VERSION := v20250213.0
 
 
 # Setup --------------------------------------------------------------------------
@@ -79,7 +81,7 @@ lawsy-create-article-chunks:
 
 
 lawsy-embed-article-chunks:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py embed-article-chunks $(shell echo ${OUTPUT_DIR})/law/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py embed-article-chunks $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet --model_name ${ENCODER_MODEL_NAME}
 
 
 lawsy-create-article-chunk-vector-index:
@@ -90,7 +92,7 @@ lawsy-prepare: lawsy-create-article-chunks lawsy-embed-article-chunks lawsy-crea
 
 
 lawsy-run-app:
-	@PATH=".venv/bin:${PATH}" HF_HOME=$(shell echo ${HF_HOME}) PYTHONPATH=src streamlit run src/lawsy/app/app.py
+	@PATH=".venv/bin:${PATH}" HF_HOME=$(shell echo ${HF_HOME}) PYTHONPATH=src ENCODER_MODEL_NAME=${ENCODER_MODEL_NAME} streamlit run src/lawsy/app/app.py
 
 
 lawsy-docker-build-app:

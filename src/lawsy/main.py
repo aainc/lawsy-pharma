@@ -1,7 +1,9 @@
 from pathlib import Path
 
+import dotenv
 import typer
 
+dotenv.load_dotenv()
 app = typer.Typer()
 
 
@@ -48,21 +50,34 @@ def create_article_chunks(xml_dir: Path, output_jsonl_file: Path) -> None:
 
 
 @app.command()
-def embed_article_chunks(input_jsonl_file: Path, output_parquet_file: Path, max_chars: int | None = 4096) -> None:
+def embed_article_chunks(
+    input_jsonl_file: Path,
+    output_parquet_file: Path,
+    max_chars: int | None = 4096,
+    model_name: str = "openai/text-embedding-3-small",
+) -> None:
     import json
 
     import pyarrow as pa
     import pyarrow.parquet as pq
     from tqdm import tqdm
 
-    from lawsy.encoder.me5 import ME5Instruct
+    provider = model_name.split("/")[0]
+    if provider == "openai":
+        from lawsy.encoder.openai import OpenAITextEmbedding
 
-    encoder = ME5Instruct()
+        encoder = OpenAITextEmbedding(model_name)
+    else:
+        from lawsy.encoder.me5 import ME5Instruct
+
+        assert model_name == "multilingual-e5-large-instruct"
+        encoder = ME5Instruct()
+
     schema = pa.schema([("file_name", pa.string()), ("anchor", pa.string()), ("embedding", pa.list_(pa.float32()))])
     output_parquet_file.parent.mkdir(parents=True, exist_ok=True)
     with pq.ParquetWriter(output_parquet_file, schema) as writer:
         batch = []
-        batch_size = 8192
+        batch_size = 512
         with open(input_jsonl_file, "r") as fin:
             for line in tqdm(fin):
                 d = json.loads(line)
@@ -95,7 +110,9 @@ def embed_article_chunks(input_jsonl_file: Path, output_parquet_file: Path, max_
 
 
 @app.command()
-def create_article_chunk_vector_index(input_parquet_file: Path, input_chunks_file: Path, output_dir: Path) -> None:
+def create_article_chunk_vector_index(
+    input_parquet_file: Path, input_chunks_file: Path, output_dir: Path, dim: int | None = None
+) -> None:
     import json
 
     import numpy as np
@@ -104,16 +121,21 @@ def create_article_chunk_vector_index(input_parquet_file: Path, input_chunks_fil
 
     from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
 
+    assert dim is None or dim > 0
+
     table = pq.read_table(input_parquet_file)
     file_names = table.column("file_name").to_pylist()
     anchors = table.column("anchor").to_pylist()
     embeddings = np.stack(table.column("embedding").to_numpy())
+    if dim is None:
+        dim = embeddings.shape[1]
+    else:
+        embeddings = embeddings[:, :dim]
     chunks = {}
     with open(input_chunks_file) as fin:
         for line in tqdm(fin):
             chunk = json.loads(line)
             chunks[chunk["file_name"], chunk["anchor"]] = chunk
-    dim = embeddings.shape[1]
     retriever = FaissHNSWArticleRetriever.create(dim=dim)
     meta_data = [
         {
