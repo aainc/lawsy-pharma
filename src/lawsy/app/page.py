@@ -1,3 +1,4 @@
+# noqa: I001
 import datetime
 from pathlib import Path
 from uuid import uuid4
@@ -12,13 +13,13 @@ from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.preload import (
-    #load_mindmap_maker,
+    # load_mindmap_maker,
     load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
     load_tavily_search_web_retriever,
     load_text_encoder,
-    load_vector_search_article_retriever
+    load_vector_search_article_retriever,
 )
 from lawsy.reranker.rrf import RRF
 from zoneinfo import ZoneInfo
@@ -50,8 +51,8 @@ def create_lawsy_page(report: Report | None = None):
         outline_creater = load_outline_creater(_lm=outline_creater_lm)
         report_writer_lm = load_lm(gpt_4o_mini)
         stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
-        #mindmap_maker_lm = load_lm(gpt_4o_mini)
-        #mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
+        # mindmap_maker_lm = load_lm(gpt_4o_mini)
+        # mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
         rrf = RRF()
 
         st.title("Lawsy" if report is None else report.title)
