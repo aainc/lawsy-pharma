@@ -1,7 +1,7 @@
-# noqa: I001
 import datetime
 from pathlib import Path
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 import dotenv
 import streamlit as st
@@ -22,7 +22,6 @@ from lawsy.app.utils.preload import (
     load_vector_search_article_retriever,
 )
 from lawsy.reranker.rrf import RRF
-from zoneinfo import ZoneInfo
 
 PAGES = {}
 

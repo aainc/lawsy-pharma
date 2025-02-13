@@ -192,7 +192,7 @@ class ReportWriter(dspy.Module):
             sections.append("\n".join(current_section))
         return overall_title, sections
 
-    def _parse_references(references: list[str]) -> dict[int, str]:
+    def _parse_references(self, references: list[str]) -> dict[int, str]:
         """リファレンスリストを {番号: 内容} の辞書に変換"""
         references_dict = {}
         for ref in references:
@@ -202,7 +202,7 @@ class ReportWriter(dspy.Module):
                 references_dict[ref_num] = f"[{ref_num}] {match.group(2)}"
         return references_dict
 
-    def _extract_references_from_outline(section_outline: str) -> list[int]:
+    def _extract_references_from_outline(self, section_outline: str) -> list[int]:
         """セクションのアウトラインから引用番号を抽出"""
         return list(map(int, re.findall(r"\[(\d+)\]", section_outline)))
 
