@@ -48,7 +48,7 @@ def create_lawsy_page(report: Report | None = None):
         query_expander = load_query_expander(_lm=query_expander_lm)
         outline_creater_lm = load_lm(gpt_4o)
         outline_creater = load_outline_creater(_lm=outline_creater_lm)
-        report_writer_lm = load_lm(gpt_4o_mini)
+        report_writer_lm = load_lm(gpt_4o)
         stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
         # mindmap_maker_lm = load_lm(gpt_4o_mini)
         # mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
