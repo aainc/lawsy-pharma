@@ -17,6 +17,7 @@ class Report(BaseModel):
     query: str
     topics: list[str]
     title: str
+    outline: str = ""  # 新規項目で既存のreportには含まれないのでその場合は空文字
     report_content: str
     mindmap: str
     references: list[SearchResultType]
@@ -36,6 +37,7 @@ class Report(BaseModel):
             query=self.query,
             topics=self.topics,
             title=self.title,
+            outline=self.outline,
             report_content=self.report_content,
             mindmap=self.mindmap,
             references=[reference.model_dump(mode="json") for reference in self.references],

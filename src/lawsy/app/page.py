@@ -74,6 +74,8 @@ def create_lawsy_page(report: Report | None = None):
                 st.write(f"found {len(report.references)} sources:")
                 for i, result in enumerate(report.references, start=1):
                     st.write(f"[{i}] " + result.title)
+                st.write("generated outline:")
+                st.write(report.outline)
             # show
             st.write(report.report_content)
             markmap(report.mindmap, height=400)
@@ -192,6 +194,7 @@ def create_lawsy_page(report: Report | None = None):
                 query=query,
                 topics=query_expander_result.topics,
                 title=title,
+                outline=outline_creater_result.outline,
                 report_content=report_content,
                 mindmap=mindmap,
                 references=search_results,  # reference = search result for now
