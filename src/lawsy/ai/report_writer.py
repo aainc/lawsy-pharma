@@ -27,7 +27,6 @@ class WriteSection(dspy.Signature):
        引用なしの創作は論拠が明確でない限り全く評価されません。
     4. 情報源を解説の末尾に含める必要はありません。
     5. 日本語のですます調で解説を書いてください。
-
     """
 
     query = dspy.InputField(desc="クエリー", format=str)
