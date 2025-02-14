@@ -7,6 +7,7 @@ import streamlit as st
 from loguru import logger
 
 from lawsy.ai.mindmap_maker import MindMapMaker
+from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
@@ -78,6 +79,14 @@ def load_query_expander(_lm) -> QueryExpander:
             logger.info("loading query expander...")
             st.session_state.query_expander = QueryExpander(lm=_lm)
     return st.session_state.query_expander
+
+
+def load_outline_creater(_lm) -> OutlineCreater:
+    if "outline_creater" not in st.session_state:
+        with st.spinner("loading outline creater..."):
+            logger.info("loading outline creater...")
+            st.session_state.outline_creater = OutlineCreater(lm=_lm)
+    return st.session_state.outline_creater
 
 
 def load_report_writer(_lm) -> ReportWriter:

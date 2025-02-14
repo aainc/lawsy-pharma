@@ -13,7 +13,8 @@ from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.preload import (
-    load_mindmap_maker,
+    # load_mindmap_maker,
+    load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
     load_tavily_search_web_retriever,
@@ -45,10 +46,12 @@ def create_lawsy_page(report: Report | None = None):
 
         query_expander_lm = load_lm(gpt_4o_mini)
         query_expander = load_query_expander(_lm=query_expander_lm)
-        report_writer_lm = load_lm(gpt_4o)
+        outline_creater_lm = load_lm(gpt_4o)
+        outline_creater = load_outline_creater(_lm=outline_creater_lm)
+        report_writer_lm = load_lm(gpt_4o_mini)
         stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
-        mindmap_maker_lm = load_lm(gpt_4o_mini)
-        mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
+        # mindmap_maker_lm = load_lm(gpt_4o_mini)
+        # mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
         rrf = RRF()
 
         st.title("Lawsy" if report is None else report.title)
@@ -142,7 +145,13 @@ def create_lawsy_page(report: Report | None = None):
                         seen.add(result.url)
                     if len(seen) == 30:
                         break
-
+                # create outline
+                status.update(label="creating outline...")
+                outline_creater_result = outline_creater(
+                    query=query, topics=query_expander_result.topics, references=references
+                )
+                st.write("generated outline:")
+                st.text(outline_creater_result.outline)
                 # complete
                 status.update(label="complete", state="complete", expanded=False)
 
@@ -150,7 +159,7 @@ def create_lawsy_page(report: Report | None = None):
             report_box = st.empty()
             mindmap_box = st.empty()
             report_stream = stream_report_writer(
-                query=query, topics=query_expander_result.topics, references=references
+                query=query, outline=outline_creater_result.outline, references=references
             )
             st.markdown("## References")
             for i, result in enumerate(search_results, start=1):
@@ -164,10 +173,10 @@ def create_lawsy_page(report: Report | None = None):
             report_box.write_stream(report_stream)
 
             # Mindmap
-            mindmap = mindmap_maker(stream_report_writer.get_text())
-            logger.info("mindmap: " + mindmap.mindmap)
+            mindmap = outline_creater_result.outline  # mindmap_maker(stream_report_writer.get_text())
+            # logger.info("mindmap: " + mindmap.mindmap)
             with mindmap_box.container():
-                markmap(mindmap.mindmap, height=400)
+                markmap(mindmap, height=400)
 
             # save
             report_content = stream_report_writer.get_text()
@@ -184,7 +193,7 @@ def create_lawsy_page(report: Report | None = None):
                 topics=query_expander_result.topics,
                 title=title,
                 report_content=report_content,
-                mindmap=mindmap.mindmap,
+                mindmap=mindmap,
                 references=search_results,  # reference = search result for now
                 search_results=search_results,
             )
