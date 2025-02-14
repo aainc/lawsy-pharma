@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import dspy
 
@@ -15,7 +14,6 @@ def load_lm(model_name: str, **kwargs) -> dspy.LM:
     if provider == "openai":
         return dspy.LM(model_name, api_key=os.environ["OPENAI_API_KEY"], **kwargs)  # type: ignore
     elif provider == "vertex_ai":
-        credentials_json = Path("sa.json").read_text()
-        return dspy.LM(model_name, credentials=credentials_json, **kwargs)  # type: ignore
+        return dspy.LM(model_name, **kwargs)  # type: ignore
     else:
         raise ValueError(f"provider must be one of [openai, vertex_ai] but {provider} was given")

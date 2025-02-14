@@ -12,7 +12,7 @@ from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import ReportWriter, StreamReportWriter
 from lawsy.encoder.me5 import ME5Instruct
 from lawsy.encoder.openai import OpenAITextEmbedding
-from lawsy.retriever.article_search.faiss import FaissHNSWArticleRetriever
+from lawsy.retriever.article_search.faiss import FaissFlatArticleRetriever
 from lawsy.retriever.web_search.google_search import GoogleSearchWebRetriever
 from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
 
@@ -47,11 +47,11 @@ def load_text_encoder(dim: int | None = None) -> ME5Instruct | OpenAITextEmbeddi
     return st.session_state.text_encoder
 
 
-def load_vector_search_article_retriever() -> FaissHNSWArticleRetriever:
+def load_vector_search_article_retriever() -> FaissFlatArticleRetriever:
     if "vector_search_article_retriever" not in st.session_state:
         with st.spinner("loading vector search article retriever..."):
             logger.info("loading vector search article retriever...")
-            st.session_state.vector_search_article_retriever = FaissHNSWArticleRetriever.load(
+            st.session_state.vector_search_article_retriever = FaissFlatArticleRetriever.load(
                 output_dir / "lawsy" / "article_chunks_faiss"
             )
     return st.session_state.vector_search_article_retriever

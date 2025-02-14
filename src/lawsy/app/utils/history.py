@@ -52,7 +52,7 @@ class Report(BaseModel):
 
 
 def get_storage_client() -> storage.Client:
-    client = storage.Client.from_service_account_json("sa.json")
+    client = storage.Client()
     return client
 
 
