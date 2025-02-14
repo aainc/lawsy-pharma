@@ -20,8 +20,8 @@ class Report(BaseModel):
     outline: str = ""  # 新規項目で既存のreportには含まれないのでその場合は空文字
     report_content: str
     mindmap: str
-    references: list[SearchResultType]
-    search_results: list[SearchResultType]
+    references: list  # list[SearchResultType] にすると Pydantic が union の解決に失敗するらしくエラーが出る…
+    search_results: list  # list[SearchResultType] にすると Pydantic が union の解決に失敗するらしくエラーが出る…
 
     @staticmethod
     def from_dict(d: dict) -> "Report":

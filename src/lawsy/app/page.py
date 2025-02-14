@@ -32,6 +32,31 @@ def create_lawsy_page(report: Report | None = None):
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
+        if report is not None:
+            logger.info("reproduce previous report")
+            with st.status("Reasoning Details"):
+                st.write("query:")
+                st.write(report.query)
+                st.write("generated topics:")
+                for i, topic in enumerate(report.topics, start=1):
+                    st.write(f"[{i}] {topic}")
+                st.write(f"found {len(report.references)} sources:")
+                for i, result in enumerate(report.references, start=1):
+                    st.write(f"[{i}] " + result.title)
+                st.write("generated outline:")
+                st.write(report.outline)
+            # show
+            st.write(report.report_content)
+            markmap(report.mindmap, height=400)
+            st.markdown("## References")
+            for i, result in enumerate(report.references, start=1):
+                st.write(f"[{i}] " + result.title)
+                st.html(f'<a href="{result.url}">{result.url}</a>')
+                st.code(result.snippet)
+                st.write("")
+            return
+
+        assert report is None
         user_id = get_user_id()
         logger.info(f"user_id: {user_id}")
         text_encoder = load_text_encoder()
@@ -64,28 +89,6 @@ def create_lawsy_page(report: Report | None = None):
             "web searchを有効化", value=True, key="lawsy_page_web_search_enabled_checkbox"
         )
         clicked = st.button("Research", key="research_page_research_button")
-
-        if not clicked and report is not None:
-            logger.info("reproduce previous report")
-            with st.status("complete"):
-                st.write("generated topics:")
-                for i, topic in enumerate(report.topics, start=1):
-                    st.write(f"[{i}] {topic}")
-                st.write(f"found {len(report.references)} sources:")
-                for i, result in enumerate(report.references, start=1):
-                    st.write(f"[{i}] " + result.title)
-                st.write("generated outline:")
-                st.write(report.outline)
-            # show
-            st.write(report.report_content)
-            markmap(report.mindmap, height=400)
-            st.markdown("## References")
-            for i, result in enumerate(report.references, start=1):
-                st.write(f"[{i}] " + result.title)
-                st.html(f'<a href="{result.url}">{result.url}</a>')
-                st.code(result.snippet)
-                st.write("")
-            return
 
         if query and clicked:
             logger.info("query: " + query)
