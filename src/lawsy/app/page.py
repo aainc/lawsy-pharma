@@ -73,7 +73,6 @@ def create_lawsy_page(report: Report | None = None):
             st.write(title_and_lead)
             draw_mindmap(report.mindmap)
             rest = embed_tooltips(rest, tooltips)
-            # logger.debug(rest)
             st.write(rest, unsafe_allow_html=True)
             st.markdown("## References")
             for i, result in enumerate(report.references, start=1):
