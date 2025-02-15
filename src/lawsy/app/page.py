@@ -13,7 +13,8 @@ from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
-from lawsy.app.utils.preload import (  # load_mindmap_maker,
+from lawsy.app.utils.preload import (
+    # load_mindmap_maker,
     load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
