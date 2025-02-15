@@ -16,7 +16,6 @@ from lawsy.app.styles.decorate_html import (
     embed_tooltips,
     get_hiddenbox_ref_html,
     get_reference_tooltip_html,
-    show_header_html,
 )
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
@@ -49,7 +48,6 @@ def create_lawsy_page(report: Report | None = None):
         dotenv.load_dotenv()
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-        st.markdown(show_header_html(), unsafe_allow_html=True)
 
         if report is not None:
             logger.info("reproduce previous report")

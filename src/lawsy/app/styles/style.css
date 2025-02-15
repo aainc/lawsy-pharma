@@ -4,58 +4,6 @@
     list-style-position: inside;
 }
 */
-/*上部のdevを非表示にするcss*/
-div[data-testid="stToolbar"] {
-    visibility: hidden;
-    height: 0%;
-    position: fixed;
-    }
-div[data-testid="stDecoration"] {
-    visibility: hidden;
-    height: 0%;
-    position: fixed;
-}
-#MainMenu {visibility: hidden;height: 0%;}
-header {visibility: hidden;height: 0%;}
-footer {visibility: hidden;height: 0%;}
-.appview-container .main .block-container{
-    padding-top: 1rem;
-    padding-right: 3rem;
-    padding-left: 3rem;
-    padding-bottom: 1rem;
-}  
-.reportview-container {
-    padding-top: 0rem;
-    padding-right: 3rem;
-    padding-left: 3rem;
-    padding-bottom: 0rem;
-}
-header[data-testid="stHeader"] {z-index: -1;}
-div[data-testid="stToolbar"] {z-index: 100;}
-div[data-testid="stDecoration"] {z-index: 100;}
-/*st非表示関連ここまで*/
-
-/*修正ヘッダー*/
-.mod-header {
-    position: fixed;
-    top: 0px;
-    left: 50%;
-    width: 98%;
-    background-color: #333;
-    color: white;
-    padding: 3px;
-    text-align: center;
-    line-height: 45px;
-    padding-top:0px;
-    font-size: 35px;
-    height: 45px;
-    z-index: 1000;
-    transform: translateX(-50%);
-}
-body{
-    margin:0;
-    padding-top: 40px;
-}
 
 /*リファレンスをたたむ*/
 .toggle-box {
@@ -119,11 +67,11 @@ input[type="checkbox"]:checked + .toggle-label::before {
     text-align: left;
     border-radius: 8px;
     position: absolute;
-    left: -360px;
-    top: -435px;
-    width: 450px;
-    max-width: 450px;
-    height: 440px;
+    left: -160px;
+    top: -305px;
+    width: 400px;
+    max-width: 400px;
+    height: 310px;
     overflow-x: hidden;
     overflow-y: auto;
     opacity: 0;

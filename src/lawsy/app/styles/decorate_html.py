@@ -1,15 +1,6 @@
 import re
 
 
-def show_header_html():  # ヘッダー作成
-    htmls = """
-    <div class="mod-header">
-    Lawsy
-    </div>
-    """
-    return htmls
-
-
 def get_hiddenbox_ref_html(i, result):  # Reference部を畳んだ表示にする
     html = f"""
     <input type="checkbox" id="toggle{i}" style="display:none;">
