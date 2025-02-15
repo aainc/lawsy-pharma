@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from pathlib import Path
 from uuid import uuid4
@@ -8,15 +9,18 @@ import streamlit as st
 from loguru import logger
 from streamlit_markmap import markmap
 
+from lawsy.ai.outline_creater import OutlineCreater
+from lawsy.ai.query_expander import QueryExpander
+from lawsy.ai.report_writer import (
+    StreamConclusionWriter,
+    StreamLeadWriter,
+    StreamSectionWriter,
+)
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.preload import (
-    # load_mindmap_maker,
-    load_outline_creater,
-    load_query_expander,
-    load_stream_report_writer,
     load_tavily_search_web_retriever,
     load_text_encoder,
     load_vector_search_article_retriever,
@@ -24,6 +28,18 @@ from lawsy.app.utils.preload import (
 from lawsy.reranker.rrf import RRF
 
 PAGES = {}
+
+
+async def write_section(section_placeholder, section_writer, query: str, references: str, section_outline: str):
+    # section_placeholder.write_stream()
+    text = ""
+    async for chunk in section_writer(query, references, section_outline):
+        text += chunk
+        section_placeholder.write(text)
+
+
+def draw_mindmap(mindmap: str):
+    return markmap(mindmap, height=400)
 
 
 def create_lawsy_page(report: Report | None = None):
@@ -44,10 +60,15 @@ def create_lawsy_page(report: Report | None = None):
                 for i, result in enumerate(report.references, start=1):
                     st.write(f"[{i}] " + result.title)
                 st.write("generated outline:")
-                st.write(report.outline)
+                st.code(report.outline)
             # show
-            st.write(report.report_content)
-            markmap(report.mindmap, height=400)
+            pos = report.report_content.find("## ")
+            assert pos >= 0
+            title_and_lead = report.report_content[:pos]
+            rest = report.report_content[pos:]
+            st.write(title_and_lead)
+            draw_mindmap(report.mindmap)
+            st.write(rest)
             st.markdown("## References")
             for i, result in enumerate(report.references, start=1):
                 st.write(f"[{i}] " + result.title)
@@ -63,20 +84,12 @@ def create_lawsy_page(report: Report | None = None):
         vector_search_article_retriever = load_vector_search_article_retriever()
         tavily_search_web_retriever = load_tavily_search_web_retriever()
 
-        gpt_4o = "openai/gpt-4o"
-        gpt_4o_mini = "openai/gpt-4o-mini"
+        gpt_4o = load_lm("openai/gpt-4o")
+        # gpt_4o_mini = load_lm("openai/gpt-4o-mini")
         # gemini_pro = "vertex_ai/gemini-2.0-exp-02-05"
         # gemini_flash = "vertex_ai/gemini-2.0-flash-001"
         # gemini_flash_lite = "vertex_ai/gemini-2.0-flash-lite-preview-02-05"
 
-        query_expander_lm = load_lm(gpt_4o_mini)
-        query_expander = load_query_expander(_lm=query_expander_lm)
-        outline_creater_lm = load_lm(gpt_4o)
-        outline_creater = load_outline_creater(_lm=outline_creater_lm)
-        report_writer_lm = load_lm(gpt_4o)
-        stream_report_writer = load_stream_report_writer(_lm=report_writer_lm)
-        # mindmap_maker_lm = load_lm(gpt_4o_mini)
-        # mindmap_maker = load_mindmap_maker(_lm=mindmap_maker_lm)
         rrf = RRF()
 
         st.title("Lawsy" if report is None else report.title)
@@ -96,6 +109,7 @@ def create_lawsy_page(report: Report | None = None):
             with st.status("processing", expanded=True) as status:
                 # query expansion
                 status.update(label="query expansion...")
+                query_expander = QueryExpander(lm=gpt_4o)
                 query_expander_result = query_expander(query=query)
                 expanded_queries = [query] + query_expander_result.topics
                 st.write("generated topics:")
@@ -152,21 +166,27 @@ def create_lawsy_page(report: Report | None = None):
                         break
                 # create outline
                 status.update(label="creating outline...")
+                outline_creater = OutlineCreater(lm=gpt_4o)
                 outline_creater_result = outline_creater(
                     query=query, topics=query_expander_result.topics, references=references
                 )
                 st.write("generated outline:")
-                st.text(outline_creater_result.outline)
+                st.code(outline_creater_result.outline.to_text())
                 # complete
                 status.update(label="complete", state="complete", expanded=False)
 
+            id2reference = {i: search_result for i, search_result in enumerate(search_results, start=1)}
+
             # show
-            report_box = st.empty()
-            mindmap_box = st.empty()
-            report_stream = stream_report_writer(
-                query=query, outline=outline_creater_result.outline, references=references
-            )
-            st.markdown("## References")
+            outline = outline_creater_result.outline
+            st.write("# " + outline.title)  # title
+            lead_box = st.empty()  # lead
+            mindmap_box = st.empty()  # mindmap
+            section_boxes = [st.empty() for _ in outline.section_outlines]  # section
+            st.write("## 結論")
+            conclusion_box = st.empty()  # conclusion
+
+            st.write("## References")
             for i, result in enumerate(search_results, start=1):
                 st.write(f"[{i}] " + result.title)
                 # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
@@ -175,17 +195,45 @@ def create_lawsy_page(report: Report | None = None):
                 # 負荷がかかるので一旦避けておく
                 # st.components.v1.iframe(result.url, height=500)  # type: ignore
                 st.write("")
-            report_box.write_stream(report_stream)
 
-            # Mindmap
-            mindmap = outline_creater_result.outline  # mindmap_maker(stream_report_writer.get_text())
-            # logger.info("mindmap: " + mindmap.mindmap)
+            stream_lead_writer = StreamLeadWriter(lm=gpt_4o)
+            lead_box.write_stream(stream_lead_writer(query=query, outline=outline.to_text()))
+            lead = stream_lead_writer.lead
             with mindmap_box.container():
-                markmap(mindmap, height=400)
+                mindmap = outline.to_text()
+                logger.info("mindmap :\n" + mindmap)
+                draw_mindmap(mindmap)
+            stream_section_writers = [StreamSectionWriter(lm=gpt_4o) for _ in outline.section_outlines]
+            tasks = []
+            for section_box, section_outline, stream_section_writer in zip(
+                section_boxes, outline.section_outlines, stream_section_writers
+            ):
+                ref_ids = set()
+                for subsection_outline in section_outline.subsection_outlines:
+                    ref_ids.update(subsection_outline.reference_ids)
+                ref_ids = sorted(ref_ids)
+                refs = []
+                for ref_id in ref_ids:
+                    ref = id2reference[ref_id]
+                    refs.append(f"[{ref_id}] " + ref.title + "\n" + ref.snippet)
+                refs = "\n\n".join(refs)
+                tasks.append(write_section(section_box, stream_section_writer, query, refs, section_outline.to_text()))
+
+            async def finish_section_writing():
+                await asyncio.gather(*tasks)
+
+            asyncio.run(finish_section_writing())
+            report_draft = "\n".join(
+                ["# " + outline.title, lead] + [writer.section_content for writer in stream_section_writers]
+            )
+            stream_conclusion_writer = StreamConclusionWriter(gpt_4o)
+            conclusion_box.write_stream(stream_conclusion_writer(query, report_draft))
+            conclusion = stream_conclusion_writer.conclusion
+            report_content = "\n".join([report_draft, "## 結論", conclusion])
 
             # save
-            report_content = stream_report_writer.get_text()
-            title = report_content.strip().split("\n")[0].lstrip("#").strip()
+            report_content = "\n".join([report_draft, conclusion])
+            title = outline.title
             now = datetime.datetime.now()
             if not title:
                 jst = now.astimezone(ZoneInfo("Asia/Tokyo"))
@@ -197,7 +245,7 @@ def create_lawsy_page(report: Report | None = None):
                 query=query,
                 topics=query_expander_result.topics,
                 title=title,
-                outline=outline_creater_result.outline,
+                outline=outline.to_text(),
                 report_content=report_content,
                 mindmap=mindmap,
                 references=search_results,  # reference = search result for now

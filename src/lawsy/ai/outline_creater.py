@@ -1,4 +1,7 @@
+import re
+
 import dspy
+from pydantic import BaseModel
 
 
 class CreateOutline(dspy.Signature):
@@ -6,18 +9,20 @@ class CreateOutline(dspy.Signature):
     収集したナレッジをもとに法令解説文書のアウトラインを作ったのですが、一部、下記のアウトライン作成ルールを逸脱している可能性があります。
     下記のルールを守るように修正してください。
 
-    1. "## Title" をセクションのタイトルとして用いる
+    1. "# Title" をレポートのタイトルに用いる。
+    2. "## Title" をセクションのタイトルとして用いる
        - 各セクション ("## Title") に対して、必ず2つ以上のサブセクション ("### Title") を生成
        - サブセクションの数は多いほどいいので、収集された情報源と引用番号（[4][27]）をできるだけ取り込むこと。
        - サブセクションの内容が似る場合は統合し、他の内容のサブセクションを設けること
        - 必要に応じて、さらに下位の階層も同様に2つ以上生成すること。
        - セクションとサブセクションには条文を含めないなど、簡潔なタイトルにすること
-    2. 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載。引用番号はサブセクションの次の行に記載すること。
+    3. 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載。引用番号はサブセクションの次の行に記載すること。
        - "### Title [3][4]" のように同じ行に引用番号を記載しないでください
-    3. "#### Title"というサブサブセクションは作成しないこと
-    4. "## 結論"という結論パートは絶対に作成してはいけない
-    5. 出力には "## Title"、"### Title"、"#### Title" などのMarkdown形式のタイトル以外のテキストを一切含めないこと。
+    4. "#### Title"というサブサブセクションは作成しないこと
+    5. "## 結論"という結論パートは絶対に作成してはいけない
+    6. 出力には "# Title", "## Title"、"### Title"、"#### Title" などのMarkdown形式のタイトル以外のテキストを一切含めないこと。
        - ナンバリングは不要
+    7. "#", "##", "###" の階層のみ作成すること
 
     【出力例】
     # レポートタイトル
@@ -61,36 +66,43 @@ class FixOutline(dspy.Signature):
     また、最後にレポートのタイトルを作成してください。結論パートは絶対に作成しないでください。
     アウトラインは以下のMarkdownフォーマットに従って作成し、次のルールを厳守すること。
 
-    1. "## Title" をセクションのタイトルとして用いる
-        - 各セクション ("## Title") に対して、必ず2つ以上のサブセクション ("### Title") を生成
-        - サブセクションの数は多いほどいいので、収集された情報源と引用番号（[4][27]）をできるだけ取り込むこと。
-        - サブセクションの内容が似る場合は統合し、他の内容のサブセクションを設けること
-        - 必要に応じて、さらに下位の階層も同様に2つ以上生成すること。
-        - セクションとサブセクションには条文を含めないなど、簡潔なタイトルにすること
-    2. 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載。引用番号は一つ後の行に記載する。
-        - "### Title [3][4]" のように同じ行に引用番号を記載しないでください
-    3. "#### Title"というサブサブセクションは作成しないこと
-    4. "## 結論"という結論パートは絶対に作成してはいけない
-    5. 出力には "## Title"、"### Title"、"#### Title" などのMarkdown形式のタイトル以外のテキストを一切含めないこと。
-        - ナンバリングは不要
-    6. これ以外の情報を含めない
+    1. "# Title" をレポートのタイトルに用いる。
+    2. "## Title" をセクションのタイトルとして用いる
+       - 各セクション ("## Title") に対して、必ず2つ以上のサブセクション ("### Title") を生成
+       - サブセクションの数は多いほどいいので、収集された情報源と引用番号（[4][27]）をできるだけ取り込むこと。
+       - サブセクションの内容が似る場合は統合し、他の内容のサブセクションを設けること
+       - 必要に応じて、さらに下位の階層も同様に2つ以上生成すること。
+       - セクションとサブセクションには条文を含めないなど、簡潔なタイトルにすること
+    3. 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載。引用番号はサブセクションの次の行に記載すること。
+       - "### Title [3][4]" のように同じ行に引用番号を記載しないでください
+    4. "#### Title"というサブサブセクションは作成しないこと
+    5. "## 結論"という結論パートは絶対に作成してはいけない
+    6. 出力には "# Title", "## Title"、"### Title"、"#### Title" などのMarkdown形式のタイトル以外のテキストを一切含めないこと。
+       - ナンバリングは不要
+    7. "#", "##", "###" の階層のみ作成すること
 
-    【入力アウトライン例】
-    # レポートタイトル: xxx
+    【修正が必要な入力アウトライン例】
+
+    ```
+    # レポートタイトル: xxx    // 「レポートタイトル:」のような修飾は不要
     ## セクション1
-    ### サブセクション1 [4]
+    ### サブセクション1 [4]    // サブセクションと同じ行に引用を書かない
     [4]
-    ### サブセクション2 [30][28[1][27]
+    ### サブセクション2 [30][28[1][27]  // サブセクションと同じ行に引用を書かない
     [30][28][1][27]
     ## セクション2
-    [2][24][29][11][4]
+    [2][24][29][11][4]    // セクションには引用をつけない
     ### サブセクション1
-    ### サブセクション: yyy
-    [2][24]
+    ### サブセクション: yyy    // 「サブセクション:」のような修飾は不要
+    [2]
+    [24]    // 複数行にわたって引用を書かない
     ### サブセクション3
     [29][11][4]
+    ```
 
     【修正済みアウトライン例】
+
+    ```
     # xxx
     ## セクション1
     ### サブセクション1
@@ -104,10 +116,41 @@ class FixOutline(dspy.Signature):
     [2][24]
     ### サブセクション3
     [29][11][4]
+    ```
     """  # noqa: E501
 
     outline = dspy.InputField(desc="入力アウトライン", foramt=str)
     fixed_outline = dspy.OutputField(desc="修正済みアウトライン", format=str)
+
+
+class SubsectionOutline(BaseModel):
+    title: str
+    reference_ids: list[int]
+
+    def to_text(self) -> str:
+        return "\n".join(
+            ["### " + self.title, "".join([f"[{reference_id}]" for reference_id in self.reference_ids])]
+        ).strip()
+
+
+class SectionOutline(BaseModel):
+    title: str
+    subsection_outlines: list[SubsectionOutline]
+
+    def to_text(self) -> str:
+        return "\n".join(
+            ["## " + self.title] + [subsection_outline.to_text() for subsection_outline in self.subsection_outlines]
+        )
+
+
+class Outline(BaseModel):
+    title: str
+    section_outlines: list[SectionOutline]
+
+    def to_text(self) -> str:
+        return "\n".join(
+            ["# " + self.title] + [section_outline.to_text() for section_outline in self.section_outlines]
+        )
 
 
 class OutlineCreater(dspy.Module):
@@ -115,6 +158,51 @@ class OutlineCreater(dspy.Module):
         self.lm = lm
         self.gen_outline = dspy.Predict(CreateOutline)
         self.fix_outline = dspy.Predict(FixOutline)
+
+    @staticmethod
+    def __parse_outline(outline) -> Outline:
+        report_title = None
+        section_title = None
+        subsection_title = None
+        section_outlines = []
+        subsection_outlines = []
+        reference_ids = []
+        for line in outline.splitlines():
+            if not line.strip():
+                continue
+            elif line.startswith("# "):
+                assert report_title is None
+                report_title = line[2:].strip()
+                continue
+            elif line.startswith("## "):
+                if section_title is not None:
+                    assert len(subsection_outlines) > 0
+                    section_outlines.append(
+                        SectionOutline(title=section_title, subsection_outlines=subsection_outlines)
+                    )  # noqa: E501
+                section_title = line[3:].strip()
+                subsection_outlines = []
+                continue
+            elif line.startswith("### "):
+                if subsection_title is not None:
+                    subsection_outlines.append(SubsectionOutline(title=subsection_title, reference_ids=reference_ids))
+                subsection_title = line[4:].strip()
+                reference_ids = []
+                continue
+            else:
+                assert subsection_title is not None
+                assert re.match(r"\[\d+\]+", line)
+                reference_ids = [int(matched) for matched in re.findall(r"\[(\d+)\]", line)]
+                subsection_outlines.append(SubsectionOutline(title=subsection_title, reference_ids=reference_ids))
+                subsection_title = None
+                reference_ids = []
+                continue
+        if subsection_title:
+            assert section_title is not None
+            subsection_outlines.append(SubsectionOutline(title=subsection_title, reference_ids=reference_ids))
+            section_outlines.append(SectionOutline(title=section_title, subsection_outlines=subsection_outlines))
+        assert report_title is not None
+        return Outline(title=report_title, section_outlines=section_outlines)
 
     def forward(self, query: str, topics: list, references: list[str]) -> dspy.Prediction:
         topics_text = "\n".join([f"- {topic}" for topic in topics])
@@ -126,5 +214,5 @@ class OutlineCreater(dspy.Module):
                 references=references_text,
             )
             fix_outline_result = self.fix_outline(outline=create_outline_result.outline)
-
-        return dspy.Prediction(outline=fix_outline_result.fixed_outline)
+        parsed_outline = self.__parse_outline(fix_outline_result.fixed_outline)
+        return dspy.Prediction(outline=parsed_outline)
