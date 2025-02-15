@@ -1,5 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap');
+
+/* すべてのテキストに Noto Sans JP を強制適用 */
+body, h1, h2, h3, h4, h5, h6, p {
+    font-family: 'Noto Sans JP', sans-serif !important;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* 特定の要素（例: iframe）だけ等幅フォントを適用する場合 */
 .stIFrame {
-    font-family: 'Noto Sans Mono', monospace;
+    font-family: 'Noto Sans Mono', monospace !important;
     border: 2px gray solid;
     text-indent: 1rem;
     list-style-position: inside;
