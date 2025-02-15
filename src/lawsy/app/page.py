@@ -9,7 +9,7 @@ import streamlit as st
 from loguru import logger
 from streamlit_markmap import markmap
 
-from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html, show_header_html
+from lawsy.app.styles.decorate_html import embed_tooltips,get_reference_tooltip_html,get_hiddenbox_ref_html, show_header_html
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import (
@@ -63,14 +63,18 @@ def create_lawsy_page(report: Report | None = None):
                     st.write(f"[{i}] " + result.title)
                 st.write("generated outline:")
                 st.code(report.outline)
+            tooltips = get_reference_tooltip_html(report.references)
             # show
+            
             pos = report.report_content.find("## ")
             assert pos >= 0
             title_and_lead = report.report_content[:pos]
             rest = report.report_content[pos:]
             st.write(title_and_lead)
             draw_mindmap(report.mindmap)
-            st.write(rest)
+            rest = embed_tooltips(rest,tooltips)
+            #logger.debug(rest)
+            st.write(rest,unsafe_allow_html=True)
             st.markdown("## References")
             for i, result in enumerate(report.references, start=1):
                 # st.write(f"[{i}] " + result.title)

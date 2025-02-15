@@ -76,7 +76,7 @@ input[type="checkbox"]:checked ~ .toggle-box {
     align-items: center;
 }
 .toggle-label::before {
-    content: "+";
+    content: "▶";
     display: flex;
     justify-content: center;
     align-items: center;
@@ -84,7 +84,6 @@ input[type="checkbox"]:checked ~ .toggle-box {
     height: 18px;
     min-width: 18px;
     min-height: 18px;
-    border: 1px solid black;
     text-align: center;
     font-weight: bold;
     margin-right: 3px;
@@ -96,7 +95,7 @@ input[type="checkbox"]:checked ~ .toggle-box {
     text-decoration: underline;
 }
 input[type="checkbox"]:checked + .toggle-label::before {
-    content: "−";
+    content: "▼";
 }
 
 /*tooltip表示*/
