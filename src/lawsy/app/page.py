@@ -8,12 +8,12 @@ import streamlit as st
 from loguru import logger
 from streamlit_markmap import markmap
 
+from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html, show_header_html
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
-from lawsy.app.utils.preload import (
-    # load_mindmap_maker,
+from lawsy.app.utils.preload import (  # load_mindmap_maker,
     load_outline_creater,
     load_query_expander,
     load_stream_report_writer,
@@ -31,6 +31,7 @@ def create_lawsy_page(report: Report | None = None):
         dotenv.load_dotenv()
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        st.markdown(show_header_html(), unsafe_allow_html=True)
 
         if report is not None:
             logger.info("reproduce previous report")
@@ -50,10 +51,12 @@ def create_lawsy_page(report: Report | None = None):
             markmap(report.mindmap, height=400)
             st.markdown("## References")
             for i, result in enumerate(report.references, start=1):
-                st.write(f"[{i}] " + result.title)
-                st.html(f'<a href="{result.url}">{result.url}</a>')
-                st.code(result.snippet)
-                st.write("")
+                # st.write(f"[{i}] " + result.title)
+                # st.html(f'<a href="{result.url}">{result.url}</a>')
+                # st.code(result.snippet)
+                # st.write("")
+                html = get_hiddenbox_ref_html(i, result)
+                st.markdown(html, unsafe_allow_html=True)
             return
 
         assert report is None
@@ -168,10 +171,12 @@ def create_lawsy_page(report: Report | None = None):
             )
             st.markdown("## References")
             for i, result in enumerate(search_results, start=1):
-                st.write(f"[{i}] " + result.title)
+                # st.write(f"[{i}] " + result.title)
                 # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
-                st.html(f'<a href="{result.url}">{result.url}</a>')
-                st.code(result.snippet)
+                # st.html(f'<a href="{result.url}">{result.url}</a>')
+                # st.code(result.snippet)
+                html = get_hiddenbox_ref_html(i, result)
+                st.markdown(html, unsafe_allow_html=True)
                 # 負荷がかかるので一旦避けておく
                 # st.components.v1.iframe(result.url, height=500)  # type: ignore
                 st.write("")
