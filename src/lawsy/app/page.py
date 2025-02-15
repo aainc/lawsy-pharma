@@ -106,28 +106,37 @@ def create_lawsy_page(report: Report | None = None):
         )
         if query is not None:
             query = query.strip()
-        web_search_enabled = st.checkbox(
-            "web searchを有効化", value=True, key="lawsy_page_web_search_enabled_checkbox"
-        )
         clicked = st.button("Research", key="research_page_research_button")
 
         if query and clicked:
             logger.info("query: " + query)
             gcp_logger.log_struct({"event": "start-research", "user_id": user_id, "query": query}, severity="INFO")
             with st.status("processing", expanded=True) as status:
+                runs = []
+                key2result = {}
+                # web search
+                status.update(label="web search...")
+                hits = tavily_search_web_retriever.search(query, k=10, site="go.jp")
+                run = {}
+                for result in hits:
+                    key = result.url
+                    run[key] = result.meta["score"]
+                    key2result[key] = result
+                runs.append(run)
                 # query expansion
                 status.update(label="query expansion...")
                 query_expander = QueryExpander(lm=gpt_4o)
-                query_expander_result = query_expander(query=query)
+                web_search_results = []
+                for i, result in enumerate(hits, start=1):
+                    web_search_results.append(f"[{i}] {result.title}\n{result.snippet}")
+                web_search_results = "\n\n".join(web_search_results)
+                query_expander_result = query_expander(query=query, web_search_results=web_search_results)
                 expanded_queries = [query] + query_expander_result.topics
                 st.write("generated topics:")
                 for i, topic in enumerate(query_expander_result.topics, start=1):
                     st.write(f"[{i}] {topic}")
-                # search
-                status.update(label="seaching...")
-                runs = []
-                key2result = {}
                 # vector search
+                status.update(label="legal search..")
                 for expanded_query in expanded_queries:
                     query_vector = text_encoder.get_query_embeddings([expanded_query])[0]
                     hits = vector_search_article_retriever.search(query_vector, k=10)
@@ -137,15 +146,7 @@ def create_lawsy_page(report: Report | None = None):
                         run[key] = result.score
                         key2result[key] = result
                     runs.append(run)
-                # web search for query
-                if web_search_enabled:
-                    hits = tavily_search_web_retriever.search(query, k=10, site="go.jp")
-                    run = {}
-                    for result in hits:
-                        key = result.url
-                        run[key] = result.meta["score"]
-                        key2result[key] = result
-                    runs.append(run)
+                # fuse
                 fused_ranks = rrf(runs)
                 search_results = []
                 for key, _ in sorted(fused_ranks.items(), key=lambda item: item[1])[::-1]:
@@ -170,7 +171,7 @@ def create_lawsy_page(report: Report | None = None):
                             continue
                         references.append(f"[{i}] {result.title}\n{result.snippet}")
                         seen.add(result.url)
-                    if len(seen) == 30:
+                    if len(seen) == 50:
                         break
                 # create outline
                 status.update(label="creating outline...")
@@ -242,7 +243,6 @@ def create_lawsy_page(report: Report | None = None):
             report_content = "\n".join([report_draft, "## 結論", conclusion])
 
             # save
-            report_content = "\n".join([report_draft, conclusion])
             title = outline.title
             now = datetime.datetime.now()
             if not title:
