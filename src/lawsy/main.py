@@ -30,7 +30,7 @@ def create_article_chunks(xml_dir: Path, output_jsonl_file: Path) -> None:
             law_title = law.law_body.law_title.text  # type: ignore
             for chunk in chunker(law):
                 article = chunk["article_path"][-1]
-                if chunk["anchor"].find("Mp-") >= 0:
+                if chunk["anchor"].find("Sp-") >= 0:
                     article_title = law_title + " 附則 " + article.article_title.text  # type: ignore
                 else:
                     article_title = law_title + " " + article.article_title.text  # type: ignore
@@ -114,8 +114,10 @@ def create_article_chunk_vector_index(
     input_parquet_file: Path, input_chunks_file: Path, output_dir: Path, dim: int | None = None
 ) -> None:
     import json
+    from datetime import datetime
 
     import numpy as np
+    import pandas as pd
     import pyarrow.parquet as pq
     from tqdm import tqdm
 
@@ -146,6 +148,12 @@ def create_article_chunk_vector_index(
         }
         for file_name, anchor in zip(file_names, anchors)
     ]
+    # 同一内容の条文は最も古い日時のみを残す
+    df = pd.DataFrame(meta_data)
+    df["date"] = df["file_name"].apply(lambda file_name: datetime.strptime(file_name.split("_")[1], "%Y%m%d"))
+    index = df.sort_values("date")["chunk"].drop_duplicates().index
+    embeddings = embeddings[index]
+    meta_data = [meta_data[idx] for idx in index]
     retriever.add(embeddings, meta_data)
     retriever.save(output_dir)
 
