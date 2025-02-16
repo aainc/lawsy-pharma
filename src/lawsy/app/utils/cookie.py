@@ -1,3 +1,5 @@
+import json
+from typing import Any
 from uuid import uuid4
 
 import streamlit as st
@@ -24,3 +26,16 @@ def get_user_id() -> str:
         user_id = "user-" + str(uuid4())
     cookie_controller.set("user_id", user_id, max_age=365 * 86400)
     return user_id
+
+
+def get_cookie(name: str) -> Any:
+    assert cookie_controller is not None
+    val = cookie_controller.get(name)
+    if val is not None:
+        val = json.loads(val)
+    return val
+
+
+def set_cookie(name: str, value: Any) -> None:
+    assert cookie_controller is not None
+    cookie_controller.set(name, json.dumps(value))

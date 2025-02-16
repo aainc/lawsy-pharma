@@ -42,6 +42,7 @@ dependencies = [
     "google-cloud-logging>=3.11.4",
     "streamlit-cookies-controller>=0.0.4",
     "google-cloud-storage>=3.0.0",
+    "streamlit-tags>=1.2.8",
 ]
 
 [dependency-groups]
