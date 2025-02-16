@@ -6,6 +6,7 @@ import dotenv
 import streamlit as st
 from loguru import logger
 
+from lawsy.app.config import create_config_page, init_config
 from lawsy.app.page import PAGES, create_lawsy_page
 from lawsy.app.utils.cookie import get_user_id, init_cookies
 from lawsy.app.utils.history import get_history
@@ -37,6 +38,8 @@ if tac - tic < 3:
 user_id = get_user_id()
 logger.info(f"user_id: {user_id}")
 
+init_config()
+
 history = get_history(user_id)
 if history:
     logger.info("history:\n" + "\n".join(["- " + report.title for report in history]))
@@ -47,6 +50,7 @@ for report in history:
 
 pages = {
     "New": [st.Page(create_lawsy_page(), title="New Research", url_path="new", icon=":material/edit_square:")],
+    "Config": [st.Page(create_config_page, title="Config", url_path="config", icon=":material/settings:")],
     "History": [PAGES[report.id] for report in history],
 }
 pg = st.navigation(pages, expanded=True)

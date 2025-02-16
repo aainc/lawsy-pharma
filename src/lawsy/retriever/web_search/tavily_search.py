@@ -38,9 +38,13 @@ class TavilySearchWebRetriever:
         fixed_response["results"] = results
         return fixed_response
 
-    def search(self, query: str, k: int = 30, lr: str = "lang_ja", site: str | None = None) -> list[WebSearchResult]:
+    def search(
+        self, query: str, k: int = 30, lr: str = "lang_ja", domains: list[str] | None = None
+    ) -> list[WebSearchResult]:
         assert k > 0
-        include_domains = [] if site is None else [site]
+        if domains is None:
+            domains = []
+        include_domains = domains
         response = self.client.search(
             query=query,
             include_images=False,
