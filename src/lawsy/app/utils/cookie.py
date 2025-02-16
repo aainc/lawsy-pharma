@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import streamlit as st
 from streamlit_cookies_controller import CookieController
 
 cookie_controller = None
@@ -7,10 +8,16 @@ cookie_controller = None
 
 def init_cookies():
     global cookie_controller
+    if "lawsy_cookie_initialized" not in st.session_state:
+        st.session_state.lawsy_cookie_initialized = False
     cookie_controller = CookieController(key="lawsy-cookie")
 
 
 def get_user_id() -> str:
+    while not st.session_state.get("lawsy_cookie_initialized", False):
+        init_cookies()
+        # wait until cookies are synced proposed in https://www.reddit.com/r/Streamlit/comments/1fdm1pj/persisting_session_state_data_across_browser/
+        st.session_state.lawsy_cookie_initialized = True
     assert cookie_controller is not None
     user_id = cookie_controller.get("user_id")
     if user_id is None:
