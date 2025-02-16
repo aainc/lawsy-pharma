@@ -9,15 +9,30 @@ from loguru import logger
 from lawsy.app.page import PAGES, create_lawsy_page
 from lawsy.app.utils.cookie import get_user_id, init_cookies
 from lawsy.app.utils.history import get_history
+from lawsy.app.utils.preload import (
+    load_tavily_search_web_retriever,
+    load_text_encoder,
+    load_vector_search_article_retriever,
+)
 
 dotenv.load_dotenv()
 data_dir = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
 
-st.set_page_config(page_title="Lawsy", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Lawsy", layout="wide")
+
 init_cookies()
-# wait until cookies are synced proposed in https://www.reddit.com/r/Streamlit/comments/1fdm1pj/persisting_session_state_data_across_browser/
-time.sleep(2)
+
+# loading cookie might require about 2 sec to sync, so we execute time-consuming preload here
+# cx) https://www.reddit.com/r/Streamlit/comments/1fdm1pj/persisting_session_state_data_across_browser/
+tic = time.time()
+text_encoder = load_text_encoder()
+vector_search_article_retriever = load_vector_search_article_retriever()
+tavily_search_web_retriever = load_tavily_search_web_retriever()
+tac = time.time()
+if tac - tic < 3:
+    with st.spinner("loading cookies..."):
+        time.sleep(tac - tic)
 
 user_id = get_user_id()
 logger.info(f"user_id: {user_id}")
@@ -36,6 +51,7 @@ pages = {
 }
 pg = st.navigation(pages, expanded=True)
 # hack for always displaying navigation
-with st.sidebar:
-    st.empty()
+if len(history) > 0:
+    with st.sidebar:
+        st.empty()
 pg.run()

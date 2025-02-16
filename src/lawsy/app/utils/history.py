@@ -2,6 +2,7 @@ import json
 import os
 from typing import Annotated, Union
 
+import streamlit as st
 from google.cloud import storage
 from pydantic import BaseModel, ConfigDict
 
@@ -51,6 +52,7 @@ class Report(BaseModel):
         blob = bucket.blob(f"{user_id}.json")
         json_data = json.dumps([report.to_dict() for report in history], ensure_ascii=False)
         blob.upload_from_string(json_data, content_type="text/json")
+        st.session_state.history = history
 
 
 def get_storage_client() -> storage.Client:
@@ -59,6 +61,8 @@ def get_storage_client() -> storage.Client:
 
 
 def get_history(user_id: str) -> list[Report]:
+    if "history" in st.session_state:
+        return st.session_state.history
     client = get_storage_client()
     bucket = client.bucket(os.environ["HISTORY_BUCKET_NAME"])
     blob = bucket.blob(f"{user_id}.json")
@@ -66,6 +70,8 @@ def get_history(user_id: str) -> list[Report]:
         with blob.open("r") as fin:
             data = json.load(fin)
         history = [Report.from_dict(d) for d in data]
+        st.session_state.history = history
         return history
     else:
+        st.session_state.history = []
         return []
