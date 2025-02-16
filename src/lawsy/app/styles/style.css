@@ -1,9 +1,45 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap');
 
 /* すべてのテキストに Noto Sans JP を強制適用 */
-body, h1, h2, h3, h4, h5, h6, p {
+body, p {
     font-family: 'Noto Sans JP', sans-serif !important;
-    font-size: 16px;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    margin-top: 0rem !important;
+}
+
+/* 見出しのフォント */
+h1, h2, h3, h4 {
+    font-family: 'Noto Sans JP', sans-serif !important;
+}
+
+h1 {
+    font-size: 2.5rem !important;
+    line-height: 1.4 !important;
+}
+
+h2 {
+    font-size: 2rem !important;
+    line-height: 1.0 !important;
+    margin-bottom: 0rem !important;
+}
+
+h3 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+    margin-top: 0rem !important;
+    margin-bottom: 0rem !important;
+}
+
+.st-emotion-cache-1lvxfs7, .e121c1cl2 {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* History（ナビゲーション部分）のフォントサイズを14pxに */
+.st-emotion-cache-6tkfeg, .e1dbuyne6 {
+    font-size: 14px !important;
     line-height: 1.6;
 }
 
