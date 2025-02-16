@@ -8,7 +8,7 @@ PYRIGHT := pyright
 HF_HOME := ./cache
 ENCODER_MODEL_NAME := openai/text-embedding-3-small
 ENCODER_DIM := 512
-PREPROCESSED_DATA_VERSION := v20250213.0
+PREPROCESSED_DATA_VERSION := v20250216.0
 
 
 # Setup --------------------------------------------------------------------------
