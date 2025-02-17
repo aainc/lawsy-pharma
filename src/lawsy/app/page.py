@@ -11,12 +11,13 @@ from streamlit_markmap import markmap
 
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
-from lawsy.ai.report_writer import (
-    StreamConclusionWriter,
-    StreamLeadWriter,
-    StreamSectionWriter,
-)
+from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
 from lawsy.app.config import get_config
+from lawsy.app.styles.decorate_html import (
+    embed_tooltips,
+    get_hiddenbox_ref_html,
+    get_reference_tooltip_html,
+)
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
@@ -62,6 +63,7 @@ def create_lawsy_page(report: Report | None = None):
                     st.write(f"[{i}] " + result.title)
                 st.write("generated outline:")
                 st.code(report.outline)
+            tooltips = get_reference_tooltip_html(report.references)
             # show
             pos = report.report_content.find("## ")
             assert pos >= 0
@@ -69,13 +71,16 @@ def create_lawsy_page(report: Report | None = None):
             rest = report.report_content[pos:]
             st.write(title_and_lead)
             draw_mindmap(report.mindmap)
-            st.write(rest)
+            rest = embed_tooltips(rest, tooltips)
+            st.write(rest, unsafe_allow_html=True)
             st.markdown("## References")
             for i, result in enumerate(report.references, start=1):
-                st.write(f"[{i}] " + result.title)
-                st.html(f'<a href="{result.url}">{result.url}</a>')
-                st.code(result.snippet)
-                st.write("")
+                # st.write(f"[{i}] " + result.title)
+                # st.html(f'<a href="{result.url}">{result.url}</a>')
+                # st.code(result.snippet)
+                # st.write("")
+                html = get_hiddenbox_ref_html(i, result)
+                st.markdown(html, unsafe_allow_html=True)
             return
 
         assert report is None
@@ -245,10 +250,12 @@ def create_lawsy_page(report: Report | None = None):
 
             st.write("## References")
             for i, result in enumerate(search_results, start=1):
-                st.write(f"[{i}] " + result.title)
+                # st.write(f"[{i}] " + result.title)
                 # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
-                st.html(f'<a href="{result.url}">{result.url}</a>')
-                st.code(result.snippet)
+                # st.html(f'<a href="{result.url}">{result.url}</a>')
+                # st.code(result.snippet)
+                html = get_hiddenbox_ref_html(i, result)
+                st.markdown(html, unsafe_allow_html=True)
                 # 負荷がかかるので一旦避けておく
                 # st.components.v1.iframe(result.url, height=500)  # type: ignore
                 st.write("")
