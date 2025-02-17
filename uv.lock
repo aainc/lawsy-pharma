@@ -1843,19 +1843,16 @@ name = "law-dx-hackathon-2025"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "beautifulsoup4" },
     { name = "dspy" },
     { name = "faiss-cpu" },
     { name = "fast-langdetect" },
     { name = "ftfy" },
-    { name = "fugashi" },
     { name = "google-api-python-client" },
     { name = "google-auth" },
     { name = "google-cloud-logging" },
     { name = "google-cloud-storage" },
     { name = "httpx" },
     { name = "ja-law-parser" },
-    { name = "jupyterlab" },
     { name = "loguru" },
     { name = "lxml" },
     { name = "numpy" },
@@ -1863,51 +1860,51 @@ dependencies = [
     { name = "pandas" },
     { name = "pydantic" },
     { name = "python-dotenv" },
-    { name = "qdrant-client" },
     { name = "requests" },
-    { name = "safetensors" },
     { name = "seaborn" },
-    { name = "sentence-transformers" },
     { name = "streamlit" },
     { name = "streamlit-cookies-controller" },
     { name = "streamlit-markmap" },
     { name = "streamlit-tags" },
     { name = "tavily-python" },
     { name = "tenacity" },
-    { name = "torch" },
     { name = "tqdm" },
-    { name = "transformers" },
-    { name = "typer" },
     { name = "types-lxml" },
-    { name = "unidic-lite" },
-    { name = "yasem" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "beautifulsoup4" },
+    { name = "fugashi" },
+    { name = "jupyterlab" },
     { name = "pyright" },
+    { name = "qdrant-client" },
     { name = "ruff" },
+    { name = "sentence-transformers" },
+    { name = "torch" },
+    { name = "transformers" },
+    { name = "typer" },
+    { name = "unidic-lite" },
+    { name = "yasem" },
 ]
 kokkai-search = [
     { name = "dspy" },
     { name = "openai" },
+    { name = "safetensors" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.12.3" },
     { name = "dspy", specifier = ">=2.5.43" },
     { name = "faiss-cpu", specifier = ">=1.9.0.post1" },
     { name = "fast-langdetect", specifier = ">=0.2.5" },
     { name = "ftfy", specifier = ">=6.3.1" },
-    { name = "fugashi", specifier = ">=1.4.0" },
     { name = "google-api-python-client", specifier = ">=2.159.0" },
     { name = "google-auth", specifier = ">=2.38.0" },
     { name = "google-cloud-logging", specifier = ">=3.11.4" },
     { name = "google-cloud-storage", specifier = ">=3.0.0" },
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "ja-law-parser", specifier = ">=0.3.0" },
-    { name = "jupyterlab", specifier = ">=4.3.4" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "lxml", specifier = ">=5.3.0" },
     { name = "numpy", specifier = ">=2.2.1" },
@@ -1915,34 +1912,37 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pydantic", specifier = ">=2.10.4" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "qdrant-client", specifier = ">=1.12.2" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "safetensors", specifier = ">=0.4.5" },
     { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "sentence-transformers", specifier = ">=3.3.1" },
     { name = "streamlit", specifier = ">=1.41.1" },
     { name = "streamlit-cookies-controller", specifier = ">=0.0.4" },
     { name = "streamlit-markmap", specifier = ">=1.0.1" },
     { name = "streamlit-tags", specifier = ">=1.2.8" },
     { name = "tavily-python", specifier = ">=0.5.1" },
     { name = "tenacity", specifier = ">=9.0.0" },
-    { name = "torch", specifier = ">=2.5.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "transformers", specifier = ">=4.47.1" },
-    { name = "typer", specifier = ">=0.15.1" },
     { name = "types-lxml", specifier = ">=2024.12.13" },
-    { name = "unidic-lite", specifier = ">=1.0.8" },
-    { name = "yasem", specifier = ">=0.4.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "beautifulsoup4", specifier = ">=4.12.3" },
+    { name = "fugashi", specifier = ">=1.4.0" },
+    { name = "jupyterlab", specifier = ">=4.3.4" },
     { name = "pyright", specifier = ">=1.1.391" },
+    { name = "qdrant-client", specifier = ">=1.12.2" },
     { name = "ruff", specifier = ">=0.8.4" },
+    { name = "sentence-transformers", specifier = ">=3.3.1" },
+    { name = "torch", specifier = ">=2.5.1" },
+    { name = "transformers", specifier = ">=4.47.1" },
+    { name = "typer", specifier = ">=0.15.1" },
+    { name = "unidic-lite", specifier = ">=1.0.8" },
+    { name = "yasem", specifier = ">=0.4.1" },
 ]
 kokkai-search = [
     { name = "dspy", specifier = ">=2.5.43" },
     { name = "openai", specifier = ">=1.58.1" },
+    { name = "safetensors", specifier = ">=0.4.5" },
 ]
 
 [[package]]
