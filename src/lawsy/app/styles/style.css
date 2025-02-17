@@ -145,3 +145,12 @@ input[type="checkbox"]:checked + .toggle-label::before {
     visibility: visible;
     opacity: 1;
 }
+
+/*
+.stIFrame {
+    font-family: 'Noto Sans Mono', monospace !important;
+    border: 2px gray solid;
+    text-indent: 1rem;
+    list-style-position: inside;
+}
+*/
