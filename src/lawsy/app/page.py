@@ -204,8 +204,9 @@ def create_lawsy_page(report: Report | None = None):
                         references.append(reference)
                         total_length += len(reference)
                         seen.add(result.url)
-                    if len(seen) >= 100 or total_length >= 100000:  # max 128k tokens for GPT-4o
+                    if len(seen) >= 200 or total_length >= 100000:  # max 128k tokens for GPT-4o
                         break
+                logger.info(f"effective knowledges: {len(seen)}")
 
                 # create outline
                 status.update(label="creating outline...")
@@ -229,10 +230,6 @@ def create_lawsy_page(report: Report | None = None):
             section_boxes = [st.empty() for _ in outline.section_outlines]  # section
             conclusion_header_box = st.empty()
             conclusion_box = st.empty()  # conclusion
-
-            stream_lead_writer = StreamLeadWriter(lm=gpt_4o)
-            lead_box.write_stream(stream_lead_writer(query=query, outline=outline.to_text()))
-            lead = stream_lead_writer.lead
             with mindmap_box.container():
                 mindmap = outline.to_text()
                 logger.info("mindmap :\n" + mindmap)
@@ -259,12 +256,26 @@ def create_lawsy_page(report: Report | None = None):
             asyncio.run(finish_section_writing())
             conclusion_header_box.write("## 結論")
             report_draft = "\n".join(
-                ["# " + outline.title, lead] + [writer.section_content for writer in stream_section_writers]
+                ["# " + outline.title] + [writer.section_content for writer in stream_section_writers]
             )
             stream_conclusion_writer = StreamConclusionWriter(gpt_4o)
             conclusion_box.write_stream(stream_conclusion_writer(query, report_draft))
             conclusion = stream_conclusion_writer.conclusion
-            report_content = "\n".join([report_draft, "## 結論", conclusion])
+
+            stream_lead_writer = StreamLeadWriter(lm=gpt_4o)
+            report_draft = "\n".join(
+                ["# " + outline.title, "[リード文]"]
+                + [writer.section_content for writer in stream_section_writers]
+                + ["## 結論", conclusion]
+            )
+            lead_box.write_stream(stream_lead_writer(query=query, title=outline.title, draft=report_draft))
+            lead = stream_lead_writer.lead
+
+            report_content = "\n".join(
+                ["# " + outline.title, lead]
+                + [writer.section_content for writer in stream_section_writers]
+                + ["## 結論", conclusion]
+            )
 
             st.write("## References")
             for i, result in enumerate(search_results, start=1):
