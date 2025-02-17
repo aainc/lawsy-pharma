@@ -99,12 +99,17 @@ lawsy-docker-build-app:
 	@docker build --platform=linux/amd64 -t lawsy-app -f src/lawsy/app/Dockerfile .
 
 
-lawsy-docker-push-app:
+lawsy-docker-push-app: docker-login
 	@docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/law-dx-hackathon-2025/lawsy/lawsy-app:latest -f src/lawsy/app/Dockerfile . --push
 
 
 lawsy-docker-run-app:
-	@docker run -it --rm --name lawsy-app -v ./src:/app/src -p 8501:8501 lawsy-app:latest
+	@docker run -it --rm --name lawsy-app \
+	    -v ./src:/app/src \
+        -v ~/.config/gcloud/application_default_credentials.json:/tmp/keys.json:ro \
+        -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys.json \
+		-e GOOGLE_CLOUD_PROJECT=$(shell gcloud config get project) \
+		-p 8501:8501 lawsy-app:latest
 
 
 # Kokkai Crawler -----------------------------------------------------------------

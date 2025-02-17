@@ -9,7 +9,7 @@ WORKDIR /app
 
 RUN pip install uv
 COPY pyproject.toml pyproject.toml
-RUN uv sync
+RUN uv sync --no-dev --no-python-downloads --no-cache
 ENV PATH="/app/.venv/bin:$PATH"
 
 ENV HF_HOME="/app/cache/"
