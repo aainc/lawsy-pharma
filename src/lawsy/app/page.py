@@ -12,12 +12,12 @@ from streamlit_markmap import markmap
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
+from lawsy.app.config import get_config
 from lawsy.app.styles.decorate_html import (
     embed_tooltips,
     get_hiddenbox_ref_html,
     get_reference_tooltip_html,
 )
-from lawsy.app.config import get_config
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
