@@ -33,7 +33,7 @@ class OpenAITextEmbedding:
         return f"Instruct: {task_description}\nQuery: {query}"
 
     def _get_embeddings(self, texts: list[str]) -> npt.NDArray[np.float64]:
-        texts = [text.replace("\n", " ") for text in texts]
+        texts = [text.replace("\n", " ")[:6000] for text in texts]
         response = self.client.embeddings.create(input=texts, model=self.model_name)
         result = np.asarray([d.embedding for d in response.data])
         return result[:, : self.dim]

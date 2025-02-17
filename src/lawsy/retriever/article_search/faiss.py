@@ -27,13 +27,20 @@ class FaissFlatArticleRetriever:
                 for line in fin:
                     meta_data.append(json.loads(line))
             self.meta_data = meta_data
+            self.key_to_index = {(meta["file_name"], meta["anchor"]): i for i, meta in enumerate(self.meta_data)}
         else:
             self.index = faiss.IndexFlat(dim, faiss.METRIC_INNER_PRODUCT)
             self.meta_data = []
+            self.key_to_index = {}
 
     @property
     def vector_dim(self) -> int:
         return self.index.d
+
+    def get_vector(self, article: ArticleSearchResult) -> npt.NDArray[np.float32]:
+        key = (article.rev_id, article.anchor)
+        i = self.key_to_index[key]
+        return self.index.reconstruct(i)  # type: ignore
 
     def search(self, vec: npt.NDArray[np.float32], k: int) -> list[ArticleSearchResult]:
         vec = vec[: self.vector_dim]
@@ -64,6 +71,7 @@ class FaissFlatArticleRetriever:
     def add(self, vectors: npt.NDArray[np.float32], meta_data: list[dict]) -> None:
         self.index.add(vectors / np.linalg.norm(vectors, axis=1, keepdims=True))  # type: ignore
         self.meta_data.extend(meta_data)
+        self.key_to_index.update({(meta["file_name"], meta["anchor"]): meta for meta in meta_data})
 
     def save(self, path: Path | str) -> None:
         import json
