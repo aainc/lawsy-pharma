@@ -250,10 +250,10 @@ def create_lawsy_page(report: Report | None = None):
 
             st.write("## References")
             for i, result in enumerate(search_results, start=1):
-                #st.write(f"[{i}] " + result.title)
+                # st.write(f"[{i}] " + result.title)
                 # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
-                #st.html(f'<a href="{result.url}">{result.url}</a>')
-                #st.code(result.snippet)
+                # st.html(f'<a href="{result.url}">{result.url}</a>')
+                # st.code(result.snippet)
                 html = get_hiddenbox_ref_html(i, result)
                 st.markdown(html, unsafe_allow_html=True)
                 # 負荷がかかるので一旦避けておく
