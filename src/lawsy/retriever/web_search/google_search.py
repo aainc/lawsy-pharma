@@ -15,9 +15,12 @@ class GoogleSearchWebRetriever:
         self.cse_key = cse_key or os.environ["GOOGLE_CUSTOM_SEARCH_ENGINE_ACCESS_KEY"]
         self.cse_id = cse_id or os.environ["GOOGLE_CUSTOM_SEARCH_ENGINE_ID"]
 
-    def search(self, query: str, k: int = 30, lr: str = "lang_ja", site: str | None = None) -> list[WebSearchResult]:
-        if site is not None:
-            query = query + " site: {site}"
+    def search(
+        self, query: str, k: int = 30, lr: str = "lang_ja", domains: list[str] | None = None
+    ) -> list[WebSearchResult]:
+        if domains is None:
+            domains = []
+        query = query + " " + " OR ".join(["site:{domain}" for domain in domains])
         assert k > 0
         results = []
         start = 0

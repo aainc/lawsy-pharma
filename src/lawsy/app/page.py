@@ -17,6 +17,7 @@ from lawsy.app.styles.decorate_html import (
     get_hiddenbox_ref_html,
     get_reference_tooltip_html,
 )
+from lawsy.app.config import get_config
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
@@ -98,8 +99,8 @@ def create_lawsy_page(report: Report | None = None):
         rrf = RRF()
 
         st.title("Lawsy" if report is None else report.title)
-        query = st.text_input(
-            "Query", key="research_page_query_text_input", value="" if report is None else report.query
+        query = st.text_area(
+            "Your Research Topic", key="research_page_query_text_input", value="" if report is None else report.query
         )
         if query is not None:
             query = query.strip()
@@ -113,18 +114,35 @@ def create_lawsy_page(report: Report | None = None):
                 key2result = {}
                 # web search
                 status.update(label="web search...")
-                hits = tavily_search_web_retriever.search(query, k=10, site="go.jp")
-                run = {}
-                for result in hits:
-                    key = result.url
-                    run[key] = result.meta["score"]
-                    key2result[key] = result
-                runs.append(run)
+                web_search_hits = []
+                if get_config("free_web_search_enabled", True):
+                    logger.info("free web search")
+                    hits = tavily_search_web_retriever.search(query, k=10)
+                    run = {}
+                    for result in hits:
+                        key = result.url
+                        run[key] = result.meta["score"]
+                        key2result[key] = result
+                    logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
+                    runs.append(run)
+                    web_search_hits.extend(hits)
+                if len(get_config("web_search_domains")) > 0:
+                    domains = get_config("web_search_domains")
+                    logger.info("web search with domains: " + ", ".join(domains))
+                    hits = tavily_search_web_retriever.search(query, k=10, domains=domains)
+                    run = {}
+                    for result in hits:
+                        key = result.url
+                        run[key] = result.meta["score"]
+                        key2result[key] = result
+                    logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
+                    runs.append(run)
+                    web_search_hits.extend(hits)
                 # query expansion
                 status.update(label="query expansion...")
                 query_expander = QueryExpander(lm=gpt_4o)
                 web_search_results = []
-                for i, result in enumerate(hits, start=1):
+                for i, result in enumerate(web_search_hits, start=1):
                     web_search_results.append(f"[{i}] {result.title}\n{result.snippet}")
                 web_search_results = "\n\n".join(web_search_results)
                 query_expander_result = query_expander(query=query, web_search_results=web_search_results)
@@ -135,6 +153,7 @@ def create_lawsy_page(report: Report | None = None):
                 # vector search
                 status.update(label="legal search..")
                 for expanded_query in expanded_queries:
+                    logger.info("vector search: " + expanded_query)
                     query_vector = text_encoder.get_query_embeddings([expanded_query])[0]
                     hits = vector_search_article_retriever.search(query_vector, k=10)
                     run = {}
@@ -142,6 +161,7 @@ def create_lawsy_page(report: Report | None = None):
                         key = (result.law_id, result.anchor)
                         run[key] = result.score
                         key2result[key] = result
+                    logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
                     runs.append(run)
                 # fuse
                 fused_ranks = rrf(runs)
@@ -189,20 +209,8 @@ def create_lawsy_page(report: Report | None = None):
             lead_box = st.empty()  # lead
             mindmap_box = st.empty()  # mindmap
             section_boxes = [st.empty() for _ in outline.section_outlines]  # section
-            st.write("## 結論")
+            conclusion_header_box = st.empty()
             conclusion_box = st.empty()  # conclusion
-
-            st.write("## References")
-            for i, result in enumerate(search_results, start=1):
-                # st.write(f"[{i}] " + result.title)
-                # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
-                # st.html(f'<a href="{result.url}">{result.url}</a>')
-                # st.code(result.snippet)
-                html = get_hiddenbox_ref_html(i, result)
-                st.markdown(html, unsafe_allow_html=True)
-                # 負荷がかかるので一旦避けておく
-                # st.components.v1.iframe(result.url, height=500)  # type: ignore
-                st.write("")
 
             stream_lead_writer = StreamLeadWriter(lm=gpt_4o)
             lead_box.write_stream(stream_lead_writer(query=query, outline=outline.to_text()))
@@ -231,6 +239,7 @@ def create_lawsy_page(report: Report | None = None):
                 await asyncio.gather(*tasks)
 
             asyncio.run(finish_section_writing())
+            conclusion_header_box.write("## 結論")
             report_draft = "\n".join(
                 ["# " + outline.title, lead] + [writer.section_content for writer in stream_section_writers]
             )
@@ -238,6 +247,18 @@ def create_lawsy_page(report: Report | None = None):
             conclusion_box.write_stream(stream_conclusion_writer(query, report_draft))
             conclusion = stream_conclusion_writer.conclusion
             report_content = "\n".join([report_draft, "## 結論", conclusion])
+
+            st.write("## References")
+            for i, result in enumerate(search_results, start=1):
+                #st.write(f"[{i}] " + result.title)
+                # st.subheader(f"{i}. score: {result.score:.2f}")  # type: ignore
+                #st.html(f'<a href="{result.url}">{result.url}</a>')
+                #st.code(result.snippet)
+                html = get_hiddenbox_ref_html(i, result)
+                st.markdown(html, unsafe_allow_html=True)
+                # 負荷がかかるので一旦避けておく
+                # st.components.v1.iframe(result.url, height=500)  # type: ignore
+                st.write("")
 
             # save
             title = outline.title
