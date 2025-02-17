@@ -145,4 +145,3 @@ input[type="checkbox"]:checked + .toggle-label::before {
     visibility: visible;
     opacity: 1;
 }
-
