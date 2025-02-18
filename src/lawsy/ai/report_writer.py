@@ -7,10 +7,14 @@ from lawsy.ai.utils.stream_writer import StreamLineWriter
 
 
 class WriteLead(dspy.Signature):
-    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。下記のクエリーに関する調査をしており、クエリーをもとにレポートのアウトラインを作成しました。アウトラインをもとに、レポート全体でどのような展開がなされるか、簡潔なリード文を作成してください。"""
+    """あなたは日本の法令に精通し、分かりやすい解説を書くことに定評のある信頼できるライターです。
+    下記のクエリーに関する調査をしており、レポートを作成しました。
+    読み手にレポートがどのように展開されるかわかるように、レポートタイトルの直後に表示する簡潔なリード文の文面を生成してください。
+    """
 
     query = dspy.InputField(desc="クエリー", format=str)
-    outline = dspy.InputField(desc="レポート全体のアウトライン", format=str)
+    title = dspy.InputField(desc="レポートのタイトル", format=str)
+    draft = dspy.InputField(desc="レポート内容", format=str)
     lead = dspy.OutputField(desc="生成されたリード文", format=str)
 
 
@@ -51,8 +55,8 @@ class StreamLeadWriter(StreamLineWriter):
     def __init__(self, lm) -> None:
         super().__init__(lm=lm, signature_cls=WriteLead)
 
-    async def __call__(self, query: str, outline: str) -> AsyncGenerator[str, None]:
-        async for chunk in self.generate({"query": query, "outline": outline}):
+    async def __call__(self, query: str, title: str, draft: str) -> AsyncGenerator[str, None]:
+        async for chunk in self.generate({"query": query, "title": title, "draft": draft}):
             yield chunk
         lead = self.get_generated_text()
         logger.info("generated lead: " + lead)

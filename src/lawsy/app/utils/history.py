@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Annotated, Union
 
 import streamlit as st
@@ -56,7 +57,11 @@ class Report(BaseModel):
 
 
 def get_storage_client() -> storage.Client:
-    client = storage.Client()
+    key_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "sa.json"
+    if Path(key_file).exists():
+        client = storage.Client.from_service_account_json(key_file)
+    else:
+        client = storage.Client()
     return client
 
 

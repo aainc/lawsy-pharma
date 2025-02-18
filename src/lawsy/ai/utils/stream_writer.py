@@ -2,6 +2,7 @@ from typing import AsyncGenerator, Callable
 
 import litellm
 from dspy.adapters.chat_adapter import ChatAdapter
+from loguru import logger
 
 
 class StreamLineWriter:
@@ -49,3 +50,13 @@ class StreamLineWriter:
             yield buf
             text += buf
         self.__text = text
+
+        logger.info(
+            " ".join(
+                [
+                    f"[{self.signature_cls.__name__}]",
+                    " ".join([f"(in) {key}: {len(val)} chars" for key, val in input_kwargs.items()]),
+                    f"(out) text: {len(text)} chars",
+                ]
+            )
+        )
