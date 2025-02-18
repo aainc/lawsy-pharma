@@ -141,6 +141,16 @@ def create_lawsy_page(report: Report | None = None):
                     web_search_result_texts.append(f"[{i}] {result.title}\n{result.snippet}")
                 web_search_results_text = "\n\n".join(web_search_result_texts)
                 query_expander_result = query_expander(query=query, web_search_results=web_search_results_text)
+                logger.info(
+                    " ".join(
+                        [
+                            "[query expansion]",
+                            f"(in) query: {len(query)} chars",
+                            f"(in) web_search_results: {len(web_search_results_text)} chars",
+                            f"(out) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
+                        ]
+                    )
+                )
                 expanded_queries = [query] + query_expander_result.topics
                 st.write("generated topics:")
                 for i, topic in enumerate(query_expander_result.topics, start=1):
@@ -216,7 +226,17 @@ def create_lawsy_page(report: Report | None = None):
                 )
                 st.write("generated outline:")
                 st.code(outline_creater_result.outline.to_text())
-
+                logger.info(
+                    " ".join(
+                        [
+                            "[outline_creater]",
+                            f"(in) query: {len(query)} chars",
+                            f"(in) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
+                            f"(in) references: {sum([len(ref) for ref in references])} chars",
+                            f"(out) outline: {len(outline_creater_result.outline.to_text())} chars",
+                        ]
+                    )
+                )
                 # complete
                 status.update(label="complete", state="complete", expanded=False)
 
