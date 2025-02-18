@@ -19,11 +19,11 @@ from lawsy.app.utils.preload import (
 dotenv.load_dotenv()
 data_dir = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
+icon_path = Path(__file__).parent / "Lawsy_logo_circle.png"
 
-st.set_page_config(page_title="Lawsy", layout="wide")
+st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
 
 init_cookies()
-
 # loading cookie might require about 2 sec to sync, so we execute time-consuming preload here
 # cx) https://www.reddit.com/r/Streamlit/comments/1fdm1pj/persisting_session_state_data_across_browser/
 tic = time.time()
