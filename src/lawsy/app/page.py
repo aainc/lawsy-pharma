@@ -76,7 +76,7 @@ def create_lawsy_page(report: Report | None = None):
 
         if report is not None:
             logger.info("reproduce previous report")
-            with st.status("Reasoning Details"):
+            with st.expander("Reasoning Details"):
                 st.write("query:")
                 st.write(report.query)
                 if report.refined_query is not None:
