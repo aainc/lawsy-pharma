@@ -12,6 +12,7 @@ from streamlit_markmap import markmap
 
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
+from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
 from lawsy.app.config import get_config
 from lawsy.app.styles.decorate_html import (
@@ -78,6 +79,9 @@ def create_lawsy_page(report: Report | None = None):
             with st.status("Reasoning Details"):
                 st.write("query:")
                 st.write(report.query)
+                if report.refined_query is not None:
+                    st.write("refined query:")
+                    st.write(report.refined_query)
                 st.write("generated topics:")
                 for i, topic in enumerate(report.topics, start=1):
                     st.write(f"[{i}] {topic}")
@@ -127,18 +131,30 @@ def create_lawsy_page(report: Report | None = None):
             logger.info("query: " + query)
             gcp_logger.log_struct({"event": "start-research", "user_id": user_id, "query": query}, severity="INFO")
             with st.status("processing", expanded=True) as status:
+                # refine query
+                if len(query) >= 64:
+                    status.update(label="refine query...")
+                    query_refiner = QueryRefiner(lm=gpt_4o)
+                    query_refiner_result = query_refiner(query=query)
+                    refined_query = query_refiner_result.refined_query
+                    logger.info(f"refined_query: {refined_query}")
+                    st.write("refined query:")
+                    st.write(refined_query)
+                else:
+                    refined_query = query
+
                 # web search
                 status.update(label="web search...")
                 web_search_results = []
                 if get_config("free_web_search_enabled", True):
                     logger.info("free web search")
-                    hits = tavily_search_web_retriever.search(query, k=10)
+                    hits = tavily_search_web_retriever.search(refined_query, k=10)
                     logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
                     web_search_results.extend(hits)
                 if len(get_config("web_search_domains")) > 0:
                     domains = get_config("web_search_domains")
                     logger.info("web search with domains: " + ", ".join(domains))
-                    hits = tavily_search_web_retriever.search(query, k=10, domains=domains)
+                    hits = tavily_search_web_retriever.search(refined_query, k=10, domains=domains)
                     logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
                     web_search_results.extend(hits)
 

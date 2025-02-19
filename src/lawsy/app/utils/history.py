@@ -17,6 +17,7 @@ class Report(BaseModel):
     id: str
     timestamp: float
     query: str
+    refined_query: str | None = None
     topics: list[str]
     title: str
     outline: str = ""  # 新規項目で既存のreportには含まれないのでその場合は空文字
@@ -37,6 +38,7 @@ class Report(BaseModel):
             id=self.id,
             timestamp=self.timestamp,
             query=self.query,
+            refined_query=self.refined_query,
             topics=self.topics,
             title=self.title,
             outline=self.outline,
