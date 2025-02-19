@@ -52,7 +52,7 @@ class Report(BaseModel):
         bucket = client.bucket(os.environ["HISTORY_BUCKET_NAME"])
         blob = bucket.blob(f"{user_id}.json")
         json_data = json.dumps([report.to_dict() for report in history], ensure_ascii=False)
-        blob.upload_from_string(json_data, content_type="text/json")
+        blob.upload_from_string(data=json_data, content_type="text/json")  # type: ignore
         st.session_state.history = history
 
 
@@ -71,10 +71,9 @@ def get_history(user_id: str) -> list[Report]:
     client = get_storage_client()
     bucket = client.bucket(os.environ["HISTORY_BUCKET_NAME"])
     blob = bucket.blob(f"{user_id}.json")
-    if blob.exists():
-        with blob.open("r") as fin:
-            data = json.load(fin)
-        history = [Report.from_dict(d) for d in data]
+    if blob.exists():  # type: ignore
+        data = json.loads(blob.download_as_text())  # type: ignore
+        history = [Report.from_dict(d) for d in data]  # type: ignore
         st.session_state.history = history
         return history
     else:

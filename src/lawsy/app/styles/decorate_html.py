@@ -37,7 +37,7 @@ def embed_tooltips(text, tooltips):
             rep_html = (
                 f'<span class="tooltip">[{number}]'
                 f'<span class="tooltiptext"><span class="tooltip-header"></span>'
-                f'<span class="tooltip-content">{tooltips[number-1]}</span></span></span>'
+                f'<span class="tooltip-content">{tooltips[number - 1]}</span></span></span>'
             )
             ret = ret[: match.start()] + rep_html + ret[match.end() :]  # 直接文字列を置換
     return ret

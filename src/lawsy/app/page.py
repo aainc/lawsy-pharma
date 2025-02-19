@@ -102,9 +102,9 @@ def create_lawsy_page(report: Report | None = None):
 
         gpt_4o = load_lm("openai/gpt-4o")
         # gpt_4o_mini = load_lm("openai/gpt-4o-mini")
-        # gemini_pro = "vertex_ai/gemini-2.0-exp-02-05"
-        # gemini_flash = "vertex_ai/gemini-2.0-flash-001"
-        # gemini_flash_lite = "vertex_ai/gemini-2.0-flash-lite-preview-02-05"
+        # gemini_pro = load_lm("vertex_ai/gemini-2.0-exp-02-05")
+        # gemini_flash = load_lm("vertex_ai/gemini-2.0-flash-001")
+        # gemini_flash_lite = load_lm("vertex_ai/gemini-2.0-flash-lite-preview-02-05")
 
         st.title("Lawsy" if report is None else report.title)
         query = st.text_area(

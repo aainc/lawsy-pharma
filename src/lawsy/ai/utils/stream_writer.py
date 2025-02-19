@@ -30,6 +30,7 @@ class StreamLineWriter:
             messages=messages,
             stream=True,
             num_retries=self.lm.num_retries,
+            extra_headers={"Connection": "close"},
             **self.lm.kwargs,
         )
         buf = ""

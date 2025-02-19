@@ -42,7 +42,7 @@ class FaissFlatArticleRetriever:
         i = self.key_to_index[key]
         return self.index.reconstruct(i)  # type: ignore
 
-    def search(self, vec: npt.NDArray[np.float32], k: int) -> list[ArticleSearchResult]:
+    def search(self, vec: npt.NDArray[np.float64], k: int) -> list[ArticleSearchResult]:
         vec = vec[: self.vector_dim]
         vec = vec / np.linalg.norm(vec)
         cossims, indexs = self.index.search(vec.reshape(1, -1), k=k)  # type: ignore
@@ -126,7 +126,7 @@ class FaissHNSWArticleRetriever:
     def vector_dim(self) -> int:
         return self.index.d
 
-    def search(self, vec: npt.NDArray[np.float32], k: int) -> list[ArticleSearchResult]:
+    def search(self, vec: npt.NDArray[np.float64], k: int) -> list[ArticleSearchResult]:
         vec = vec[: self.vector_dim]
         vec = vec / np.linalg.norm(vec)
         vec = vec[: self.vector_dim]
