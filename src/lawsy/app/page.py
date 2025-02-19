@@ -55,7 +55,16 @@ async def write_section(section_placeholder, section_writer, query: str, referen
 
 
 def draw_mindmap(mindmap: str):
-    return markmap(mindmap, height=400)
+    data = f"""
+---
+markmap:
+  pan: false
+  zoom: false
+---
+
+{mindmap}
+"""
+    return markmap(data, height=400)
 
 
 def create_lawsy_page(report: Report | None = None):
