@@ -77,6 +77,20 @@ def create_research_page():
             placeholder="法令に関してあなたが知りたいこと",
             key="research_page_query_chat_input",
         )
+        st.markdown(
+            """
+            <style>
+            .custom-text-warning {
+                color: grey !important;
+                font-size: 14px !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown('<p class="custom-text-warning">※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。</p>',
+        unsafe_allow_html=True)
+
     if not query:
         return
 
