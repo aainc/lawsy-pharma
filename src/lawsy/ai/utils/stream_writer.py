@@ -2,7 +2,8 @@ from typing import AsyncGenerator, Callable
 
 import litellm
 from dspy.adapters.chat_adapter import ChatAdapter
-from loguru import logger
+
+from lawsy.utils.logging import logger
 
 
 class StreamLineWriter:

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import dotenv
 import streamlit as st
-from loguru import logger
 
 from lawsy.app.styles.decorate_html import (
     embed_tooltips,
@@ -11,6 +10,7 @@ from lawsy.app.styles.decorate_html import (
 )
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.mindmap import draw_mindmap
+from lawsy.utils.logging import logger
 
 REPORT_PAGES = {}
 

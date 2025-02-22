@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
-from loguru import logger
+
+from lawsy.utils.logging import logger
 
 
 class ME5Instruct:

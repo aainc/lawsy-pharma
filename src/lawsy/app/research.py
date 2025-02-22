@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo
 import dotenv
 import numpy as np
 import streamlit as st
-from loguru import logger
 
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
@@ -26,6 +25,7 @@ from lawsy.app.utils.preload import (
     load_text_encoder,
     load_vector_search_article_retriever,
 )
+from lawsy.utils.logging import logger
 
 
 def get_logo_path() -> Path:

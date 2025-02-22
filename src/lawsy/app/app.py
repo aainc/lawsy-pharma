@@ -3,7 +3,6 @@ from pathlib import Path
 
 import dotenv
 import streamlit as st
-from loguru import logger
 
 from lawsy.app.config import create_config_page, get_config, init_config
 from lawsy.app.report import REPORT_PAGES, create_report_page
@@ -14,6 +13,7 @@ from lawsy.app.utils.preload import (
     load_text_encoder,
     load_vector_search_article_retriever,
 )
+from lawsy.utils.logging import logger
 
 dotenv.load_dotenv()
 data_dir = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))

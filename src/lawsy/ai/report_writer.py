@@ -1,7 +1,6 @@
 from typing import AsyncGenerator
 
 import dspy
-from loguru import logger
 
 from lawsy.ai.utils.stream_writer import StreamLineWriter
 
@@ -62,7 +61,6 @@ class StreamLeadWriter(StreamLineWriter):
         async for chunk in self.generate({"query": query, "title": title, "draft": draft}):
             yield chunk
         lead = self.get_generated_text()
-        logger.info("generated lead: " + lead)
         self.lead = lead
 
 
@@ -76,7 +74,6 @@ class StreamSectionWriter(StreamLineWriter):
         ):
             yield chunk
         section_content = self.get_generated_text()
-        logger.info("generated section content: " + section_content)
         self.section_content = section_content
 
 
@@ -88,5 +85,4 @@ class StreamConclusionWriter(StreamLineWriter):
         async for chunk in self.generate({"query": query, "report_draft": report_draft}):
             yield chunk
         conclusion = self.get_generated_text()
-        logger.info("generated conclusion: " + conclusion)
         self.conclusion = conclusion

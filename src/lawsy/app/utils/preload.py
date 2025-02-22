@@ -4,13 +4,13 @@ from pathlib import Path
 
 import dotenv
 import streamlit as st
-from loguru import logger
 
 from lawsy.encoder.me5 import ME5Instruct
 from lawsy.encoder.openai import OpenAITextEmbedding
 from lawsy.retriever.article_search.faiss import FaissFlatArticleRetriever
 from lawsy.retriever.web_search.google_search import GoogleSearchWebRetriever
 from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
+from lawsy.utils.logging import logger
 
 dotenv.load_dotenv()
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
