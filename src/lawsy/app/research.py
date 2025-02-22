@@ -88,8 +88,12 @@ def create_research_page():
             """,
             unsafe_allow_html=True
         )
-        st.markdown('<p class="custom-text-warning">※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。</p>',
-        unsafe_allow_html=True)
+        warning_text = (
+            '<p class="custom-text-warning">'
+            "※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。"
+            "</p>"
+        )
+        st.markdown(warning_text, unsafe_allow_html=True)
 
     if not query:
         return
