@@ -27,7 +27,7 @@ def get_reference_tooltip_html(references):  # レポート本文中の参照[(�
     return tooltips
 
 
-def embed_tooltips(text, tooltips): #本文中の[*]にtooltipを埋め込む
+def embed_tooltips(text, tooltips):  # 本文中の[*]にtooltipを埋め込む
     # 正規表現パターン: [] 内の数字を抽出
     pattern = r"\[(\d+)\]"
     matches = list(re.finditer(pattern, text))
@@ -49,7 +49,7 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode()
 
 
-def get_logofield_html(logo_path): # 左上のロゴ用HTMLを出力する
+def get_logofield_html(logo_path):  # 左上のロゴ用HTMLを出力する
     logo_base64 = get_base64_image(logo_path)
 
     logofield = f"""
