@@ -33,6 +33,10 @@ def get_logo_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_circle.png"
 
 
+def get_logotitle_path() -> Path:
+    return Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
+
+
 def construct_query_for_fusion(expanded_queries: list[str]) -> str:
     query = expanded_queries[0]
     topics = expanded_queries[1:]
@@ -71,7 +75,10 @@ def create_research_page():
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
-    st.title("Lawsy")
+    logo_col, _ = st.columns([1, 5])
+    with logo_col:
+        st.image(get_logotitle_path())
+
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(

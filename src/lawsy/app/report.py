@@ -19,11 +19,20 @@ def get_logo_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_circle.png"
 
 
+def get_logotitle_path() -> Path:
+    return Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
+
+
 def create_report_page(report: Report):
     def page_func():
         dotenv.load_dotenv()
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+        # title logo
+        logo_col, _ = st.columns([1, 5])
+        with logo_col:
+            st.image(get_logotitle_path())
 
         logo = get_logo_path()
         logger.info("reproduce previous report")
