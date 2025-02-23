@@ -1,3 +1,4 @@
+import base64
 import re
 
 
@@ -26,7 +27,7 @@ def get_reference_tooltip_html(references):  # レポート本文中の参照[(�
     return tooltips
 
 
-def embed_tooltips(text, tooltips):
+def embed_tooltips(text, tooltips): #本文中の[*]にtooltipを埋め込む
     # 正規表現パターン: [] 内の数字を抽出
     pattern = r"\[(\d+)\]"
     matches = list(re.finditer(pattern, text))
@@ -41,3 +42,31 @@ def embed_tooltips(text, tooltips):
             )
             ret = ret[: match.start()] + rep_html + ret[match.end() :]  # 直接文字列を置換
     return ret
+
+
+def get_base64_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode()
+
+
+def get_logofield_html(logo_path): # 左上のロゴ用HTMLを出力する
+    logo_base64 = get_base64_image(logo_path)
+
+    logofield = f"""
+    <style>
+    [data-testid="stSidebarNavItems"]::before {{
+        content: " ";
+        position: absolute;
+        left: 25px;
+        top: -90px;
+        width: 200px;
+        height: 100px;
+        display: inline-block;
+        background-image: url("data:image/png;base64,{logo_base64}");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }}
+    </style>
+    """
+    return logofield
