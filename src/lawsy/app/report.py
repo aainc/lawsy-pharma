@@ -63,6 +63,24 @@ def create_report_page(report: Report):
         for i, result in enumerate(report.references, start=1):
             html = get_hiddenbox_ref_html(i, result)
             st.markdown(html, unsafe_allow_html=True)
+        st.markdown(
+            """
+            <style>
+            .custom-text-warning {
+                color: grey !important;
+                font-size: 12px !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        warning_text = (
+            '<p class="custom-text-warning">'
+            "※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。"
+            "</p>"
+        )
+        st.markdown(warning_text, unsafe_allow_html=True)
+
         return
 
     return page_func

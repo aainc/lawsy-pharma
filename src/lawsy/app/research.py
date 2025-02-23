@@ -82,9 +82,27 @@ def create_research_page():
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
-            placeholder="法令に関してあなたが知りたいこと",
+            placeholder="法令について何でも聞いてください！",
             key="research_page_query_chat_input",
         )
+        st.markdown(
+            """
+            <style>
+            .custom-text-warning {
+                color: grey !important;
+                font-size: 12px !important;
+                margin-top: -30px !important; /* 上に詰める */
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        warning_text = (
+            '<p class="custom-text-warning">'
+            "　 ※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。"
+            "</p>"
+        )
+        st.markdown(warning_text, unsafe_allow_html=True)
     if not query:
         return
 
