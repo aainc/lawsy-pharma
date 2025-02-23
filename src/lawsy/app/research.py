@@ -78,7 +78,7 @@ def create_research_page():
     logo_col, _ = st.columns([1, 5])
     with logo_col:
         st.image(get_logotitle_path())
-    
+
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
