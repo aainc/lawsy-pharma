@@ -42,34 +42,3 @@ def embed_tooltips(text, tooltips):  # 本文中の[*]にtooltipを埋め込む
             )
             ret = ret[: match.start()] + rep_html + ret[match.end() :]  # 直接文字列を置換
     return ret
-
-
-def get_base64_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode()
-
-
-def get_logofield_html(logo_path):  # 上部のロゴ用HTMLを出力する
-    logo_base64 = get_base64_image(logo_path)
-
-    logofield = f"""
-    <style>
-    .logofield {{
-        content: " ";
-        position: absolute;
-        left: 0px;
-        top: -60px;
-        width: 110px;
-        height: 90px;
-        display: inline-block;
-        background-image: url("data:image/png;base64,{logo_base64}");
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-    }}
-    </style>
-    <div class="logofield"></div>
-    """
-    # HTMLの最後に<br>が入っているのは入力行との位置調整のため
-    # /*[data-testid="stSidebarNavItems"]::before {{*/
-    return logofield

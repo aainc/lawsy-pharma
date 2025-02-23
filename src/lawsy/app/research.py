@@ -15,7 +15,7 @@ from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
 from lawsy.app.config import get_config
 from lawsy.app.report import REPORT_PAGES, create_report_page
-from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html, get_logofield_html
+from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
@@ -75,7 +75,10 @@ def create_research_page():
     lm = load_lm(lm_name)
 
     # st.title("Lawsy")
-    st.markdown(get_logofield_html(get_logotitle_path()), unsafe_allow_html=True)
+    logo_col, _ = st.columns([1, 5])
+    with logo_col:
+        st.image(get_logotitle_path())
+    
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
