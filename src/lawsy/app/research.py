@@ -65,11 +65,12 @@ def create_research_page():
     tavily_search_web_retriever = load_tavily_search_web_retriever()
     logo = get_logo_path()
 
-    gpt_4o = load_lm(os.getenv("LAWSY_LM", "openai/gpt-4o"))
-    # gpt_4o_mini = load_lm("openai/gpt-4o-mini")
-    # gemini_pro = load_lm("vertex_ai/gemini-2.0-exp-02-05")
-    # gemini_flash = load_lm("vertex_ai/gemini-2.0-flash-001")
-    # gemini_flash_lite = load_lm("vertex_ai/gemini-2.0-flash-lite-preview-02-05")
+    lm_name = os.getenv("LAWSY_LM", "openai/gpt-4o")
+    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-exp-02-05")
+    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-flash-001")
+    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-flash-lite-preview-02-05")
+    logger.info(f"using LM: {lm_name}")
+    lm = load_lm(lm_name)
 
     st.title("Lawsy")
     with st.container():
@@ -93,7 +94,7 @@ def create_research_page():
         # refine query
         if len(query) >= 64:
             status.update(label="クエリーを検索向けに変換...")
-            query_refiner = QueryRefiner(lm=gpt_4o)
+            query_refiner = QueryRefiner(lm=lm)
             query_refiner_result = query_refiner(query=query)
             refined_query = query_refiner_result.refined_query
             logger.info(f"refined_query: {refined_query}")
@@ -142,7 +143,7 @@ def create_research_page():
 
         # query expansion
         status.update(label="クエリー展開...")
-        query_expander = QueryExpander(lm=gpt_4o)
+        query_expander = QueryExpander(lm=lm)
         web_search_result_texts = []
         for i, result in enumerate(web_search_results, start=1):
             web_search_result_texts.append(f"[{i}] {result.title}\n{result.snippet}")
@@ -252,7 +253,7 @@ def create_research_page():
 
         # create outline
         status.update(label="アウトラインの生成...")
-        outline_creater = OutlineCreater(lm=gpt_4o)
+        outline_creater = OutlineCreater(lm=lm)
         outline_creater_result = outline_creater(
             query=query, topics=query_expander_result.topics, references=references
         )
@@ -293,7 +294,7 @@ def create_research_page():
         mindmap = outline.to_text()
         logger.info("mindmap :\n" + mindmap)
         draw_mindmap(mindmap)
-    stream_section_writers = [StreamSectionWriter(lm=gpt_4o) for _ in outline.section_outlines]
+    stream_section_writers = [StreamSectionWriter(lm=lm) for _ in outline.section_outlines]
     tasks = []
     for section_box, section_outline, stream_section_writer in zip(
         section_boxes, outline.section_outlines, stream_section_writers
@@ -315,11 +316,11 @@ def create_research_page():
     asyncio.run(finish_section_writing())
     conclusion_header_box.write("## 結論")
     report_draft = "\n".join(["# " + outline.title] + [writer.section_content for writer in stream_section_writers])
-    stream_conclusion_writer = StreamConclusionWriter(gpt_4o)
+    stream_conclusion_writer = StreamConclusionWriter(lm)
     conclusion_box.write_stream(stream_conclusion_writer(query, report_draft))
     conclusion = stream_conclusion_writer.conclusion
 
-    stream_lead_writer = StreamLeadWriter(lm=gpt_4o)
+    stream_lead_writer = StreamLeadWriter(lm=lm)
     report_draft = "\n".join(
         ["# " + outline.title, "[リード文]"]
         + [writer.section_content for writer in stream_section_writers]

@@ -61,11 +61,12 @@ class Report(BaseModel):
 
 
 def is_history_dir_enabled() -> bool:
-    disabled = str(os.getenv("LAWSY_HISTORY_DIR_DISABLED", "True")).lower() not in ("0", "false", "no")
+    disabled = str(os.getenv("LAWSY_HISTORY_DIR_DISABLED", "False")).lower() not in ("0", "false", "no")
     return not disabled
 
 
 def get_history(history_dir: Path | str) -> list[Report]:
+    print(history_dir, is_history_dir_enabled())
     if is_history_dir_enabled():
         history_dir = Path(history_dir)
         if history_dir.exists():  # type: ignore
