@@ -72,7 +72,7 @@ def create_research_page():
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
-    st.title("Lawsy")
+    # st.title("Lawsy")
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
