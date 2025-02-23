@@ -15,9 +15,7 @@ from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
 from lawsy.app.config import get_config
 from lawsy.app.report import REPORT_PAGES, create_report_page
-from lawsy.app.styles.decorate_html import (
-    get_hiddenbox_ref_html,
-)
+from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html, get_logofield_html
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
@@ -31,6 +29,10 @@ from lawsy.utils.logging import logger
 
 def get_logo_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_circle.png"
+
+
+def get_logotitle_path() -> Path:
+    return Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
 
 
 def construct_query_for_fusion(expanded_queries: list[str]) -> str:
@@ -73,6 +75,7 @@ def create_research_page():
     lm = load_lm(lm_name)
 
     # st.title("Lawsy")
+    st.markdown(get_logofield_html(get_logotitle_path()), unsafe_allow_html=True)
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(

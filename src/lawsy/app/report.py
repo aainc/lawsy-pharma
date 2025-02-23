@@ -6,6 +6,7 @@ import streamlit as st
 from lawsy.app.styles.decorate_html import (
     embed_tooltips,
     get_hiddenbox_ref_html,
+    get_logofield_html,
     get_reference_tooltip_html,
 )
 from lawsy.app.utils.history import Report
@@ -19,11 +20,18 @@ def get_logo_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_circle.png"
 
 
+def get_logotitle_path() -> Path:
+    return Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
+
+
 def create_report_page(report: Report):
     def page_func():
         dotenv.load_dotenv()
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+        # title logo
+        st.markdown(get_logofield_html(get_logotitle_path()), unsafe_allow_html=True)
 
         logo = get_logo_path()
         logger.info("reproduce previous report")

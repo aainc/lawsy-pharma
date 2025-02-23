@@ -49,18 +49,18 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode()
 
 
-def get_logofield_html(logo_path):  # 左上のロゴ用HTMLを出力する
+def get_logofield_html(logo_path):  # 上部のロゴ用HTMLを出力する
     logo_base64 = get_base64_image(logo_path)
 
     logofield = f"""
     <style>
-    [data-testid="stSidebarNavItems"]::before {{
+    .logofield {{
         content: " ";
         position: absolute;
-        left: 25px;
-        top: -90px;
-        width: 200px;
-        height: 100px;
+        left: 0px;
+        top: -60px;
+        width: 110px;
+        height: 90px;
         display: inline-block;
         background-image: url("data:image/png;base64,{logo_base64}");
         background-size: contain;
@@ -68,5 +68,8 @@ def get_logofield_html(logo_path):  # 左上のロゴ用HTMLを出力する
         background-position: center;
     }}
     </style>
+    <div class="logofield"></div>
     """
+    # HTMLの最後に<br>が入っているのは入力行との位置調整のため
+    # /*[data-testid="stSidebarNavItems"]::before {{*/
     return logofield
