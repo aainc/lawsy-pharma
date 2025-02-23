@@ -76,7 +76,6 @@ def create_research_page():
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
-    # st.title("Lawsy")
     logo_col, _ = st.columns([1, 5])
     with logo_col:
         st.image(get_logotitle_path())
