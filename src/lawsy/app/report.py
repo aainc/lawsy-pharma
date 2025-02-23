@@ -53,6 +53,24 @@ def create_report_page(report: Report):
         rest = report.report_content[pos:]
         title, lead = title_and_lead.split("\n", 1)
         # title
+        st.markdown(
+            """
+            <style>
+            .custom-text-warning {
+                color: grey !important;
+                font-size: 12px !important;
+                margin-top: -30px !important; /* 上に詰める */
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        warning_text = (
+            '<p class="custom-text-warning">'
+            "　 ※Lawsyの回答は必ずしも正しいとは限りません。重要な情報は確認するようにしてください。"
+            "</p>"
+        )
+        st.markdown(warning_text, unsafe_allow_html=True)
         st.write(title)
         st.write(lead)
         draw_mindmap(report.mindmap)
