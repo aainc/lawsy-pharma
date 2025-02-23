@@ -6,8 +6,6 @@
     - `uv pip install uv`
 - OpenAI
     - `OPENAI_API_KEY`
-- Tavily
-    - `TAVILY_API_KEY`
 
 ## Run
 
@@ -25,7 +23,8 @@ Create .env file and put it in the repository root directory.
 
 ```text
 OPENAI_API_KEY=sk-...  # OpenAI API KEY
-TAVILY_API_KEY=tvly-...  # Tavly API KEY
+LAWSY_WEB_SEARCH_ENGINE=DuckDuckGo
+LAWSY_LM=openai/gpt-4o-mini
 ```
 
 ### 3. Download Preprocessed Data

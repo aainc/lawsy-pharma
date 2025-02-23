@@ -22,10 +22,10 @@ from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
 from lawsy.app.utils.preload import (
-    load_tavily_search_web_retriever,
     load_text_encoder,
     load_vector_search_article_retriever,
 )
+from lawsy.app.utils.web_retreiver import load_web_retriever
 from lawsy.utils.logging import logger
 
 
@@ -62,13 +62,12 @@ def create_research_page():
 
     text_encoder = load_text_encoder()
     vector_search_article_retriever = load_vector_search_article_retriever()
-    tavily_search_web_retriever = load_tavily_search_web_retriever()
+    web_search_engine_name = os.getenv("LAWSY_WEB_SEARCH_ENGINE", "DuckDuckGo")
+    logger.info(f"using web search engine: {web_search_engine_name}")
+    web_retriever = load_web_retriever(web_search_engine_name)
     logo = get_logo_path()
 
     lm_name = os.getenv("LAWSY_LM", "openai/gpt-4o")
-    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-exp-02-05")
-    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-flash-001")
-    # lm_name = os.getenv("LAWSY_LM", "vertex_ai/gemini-2.0-flash-lite-preview-02-05")
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
@@ -126,7 +125,7 @@ def create_research_page():
     if get_config("free_web_search_enabled", True):
         status.update(label="Web 検索（フリードメイン）...", state="running")
         logger.info("free web search")
-        hits = tavily_search_web_retriever.search(refined_query, k=10)
+        hits = web_retriever.search(refined_query, k=10)
         logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
         web_search_results.extend(hits)
         content = "\n\n".join(
@@ -149,7 +148,7 @@ def create_research_page():
         status.update(label="Web 検索（ドメイン指定）...", state="running")
         domains = get_config("web_search_domains")
         logger.info("web search with domains: " + ", ".join(domains))
-        hits = tavily_search_web_retriever.search(refined_query, k=10, domains=domains)
+        hits = web_retriever.search(refined_query, k=10, domains=domains)
         web_search_results.extend(hits)
         content = "\n\n".join(
             [

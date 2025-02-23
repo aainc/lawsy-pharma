@@ -9,7 +9,6 @@ from lawsy.app.report import REPORT_PAGES, create_report_page
 from lawsy.app.research import create_research_page
 from lawsy.app.utils.history import get_history
 from lawsy.app.utils.preload import (
-    load_tavily_search_web_retriever,
     load_text_encoder,
     load_vector_search_article_retriever,
 )
@@ -24,7 +23,6 @@ st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
 
 text_encoder = load_text_encoder()
 vector_search_article_retriever = load_vector_search_article_retriever()
-tavily_search_web_retriever = load_tavily_search_web_retriever()
 
 init_config()
 

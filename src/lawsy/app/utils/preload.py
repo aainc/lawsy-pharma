@@ -8,8 +8,6 @@ import streamlit as st
 from lawsy.encoder.me5 import ME5Instruct
 from lawsy.encoder.openai import OpenAITextEmbedding
 from lawsy.retriever.article_search.faiss import FaissFlatArticleRetriever
-from lawsy.retriever.web_search.google_search import GoogleSearchWebRetriever
-from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
 from lawsy.utils.logging import logger
 
 dotenv.load_dotenv()
@@ -46,17 +44,3 @@ def load_vector_search_article_retriever() -> FaissFlatArticleRetriever:
     with st.spinner("loading vector search article retriever..."):
         logger.info("loading vector search article retriever...")
         return FaissFlatArticleRetriever.load(output_dir / "lawsy" / "article_chunks_faiss")
-
-
-@st.cache_resource
-def load_google_search_web_retriever() -> GoogleSearchWebRetriever:
-    with st.spinner("loading google search web retriever..."):
-        logger.info("loading google search web retriever...")
-        return GoogleSearchWebRetriever()
-
-
-@st.cache_resource
-def load_tavily_search_web_retriever() -> TavilySearchWebRetriever:
-    with st.spinner("loading tavily search web retriever..."):
-        logger.info("loading tavily search web retriever...")
-        return TavilySearchWebRetriever()
