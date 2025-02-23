@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 from pathlib import Path
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -64,7 +65,7 @@ def create_research_page():
     tavily_search_web_retriever = load_tavily_search_web_retriever()
     logo = get_logo_path()
 
-    gpt_4o = load_lm("openai/gpt-4o")
+    gpt_4o = load_lm(os.getenv("LAWSY_LM", "openai/gpt-4o"))
     # gpt_4o_mini = load_lm("openai/gpt-4o-mini")
     # gemini_pro = load_lm("vertex_ai/gemini-2.0-exp-02-05")
     # gemini_flash = load_lm("vertex_ai/gemini-2.0-flash-001")

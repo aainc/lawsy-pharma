@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Annotated, Union
 
@@ -51,23 +52,31 @@ class Report(BaseModel):
         )
 
     def save(self, history_dir: Path | str) -> None:
-        history_dir = Path(history_dir)
-        history_dir.mkdir(parents=True, exist_ok=True)
-        with open(history_dir / f"{self.id}.json", "w") as fout:
-            json.dump(self.to_dict(), fout, ensure_ascii=False)
+        if is_history_dir_enabled():
+            history_dir = Path(history_dir)
+            history_dir.mkdir(parents=True, exist_ok=True)
+            with open(history_dir / f"{self.id}.json", "w") as fout:
+                json.dump(self.to_dict(), fout, ensure_ascii=False)
+        st.session_state.history.insert(0, self)
+
+
+def is_history_dir_enabled() -> bool:
+    disabled = str(os.getenv("LAWSY_HISTORY_DIR_DISABLED", "True")).lower() not in ("0", "false", "no")
+    return not disabled
 
 
 def get_history(history_dir: Path | str) -> list[Report]:
-    history_dir = Path(history_dir)
-    if history_dir.exists():  # type: ignore
-        history = []
-        for history_file in history_dir.glob("*.json"):
-            with open(history_file) as fin:
-                data = json.load(fin)
-            history.append(Report.from_dict(data))
-        history = sorted(history, key=lambda report: -report.timestamp)
-        st.session_state.history = history
-        return history
-    else:
+    if is_history_dir_enabled():
+        history_dir = Path(history_dir)
+        if history_dir.exists():  # type: ignore
+            history = []
+            for history_file in history_dir.glob("*.json"):
+                with open(history_file) as fin:
+                    data = json.load(fin)
+                history.append(Report.from_dict(data))
+            history = sorted(history, key=lambda report: -report.timestamp)
+            st.session_state.history = history
+            return history
+    if "history" not in st.session_state:
         st.session_state.history = []
-        return []
+    return st.session_state.history

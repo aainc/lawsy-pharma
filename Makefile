@@ -1,14 +1,10 @@
 -include .env  # load .env if it exists
 
-DATA_DIR ?= ./data
-OUTPUT_DIR ?= ./outputs # set OUTPUT_DIR=./outputs if it's unset
-PYTHON := python
-RUFF := ruff
-PYRIGHT := pyright
-HF_HOME := ./cache
-ENCODER_MODEL_NAME := openai/text-embedding-3-small
-ENCODER_DIM := 512
-PREPROCESSED_DATA_VERSION := v20250216.0
+LAWSY_DATA_DIR ?= ./data
+LAWSY_OUTPUT_DIR ?= ./outputs # set OUTPUT_DIR=./outputs if it's unset
+LAWSY_ENCODER_MODEL_NAME ?= openai/text-embedding-3-small
+LAWSY_ENCODER_DIM ?= 512
+LAWSY_PREPROCESSED_DATA_VERSION ?= latest
 
 
 # Setup --------------------------------------------------------------------------
@@ -40,18 +36,6 @@ lint:
 	@PATH=".venv/bin:${PATH}" pyright src
 
 
-# GCP ----------------------------------------------------------------------------
-.PHONY: gcloud-login gcloud-application-default-login
-
-
-gcloud-login:
-	@gcloud auth login
-
-
-gcloud-application-default-login:
-	@gcloud auth application-default login
-
-
 # Docker -------------------------------------------------------------------------
 .PHONY: docker-login
 
@@ -73,26 +57,26 @@ docker-login:
 
 
 lawsy-download-preprocessed-data:
-	@mkdir -p outputs && gcloud storage cp -r gs://885188444194-public-data/${PREPROCESSED_DATA_VERSION}/lawsy ./outputs/
+	@mkdir -p outputs && gcloud storage cp -r gs://885188444194-public-data/${LAWSY_PREPROCESSED_DATA_VERSION}/lawsy ./outputs/
 
 
 lawsy-create-article-chunks:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunks $(shell echo ${DATA_DIR})/all_xml $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunks $(shell echo ${LAWSY_DATA_DIR})/all_xml $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunks.jsonl
 
 
 lawsy-embed-article-chunks:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py embed-article-chunks $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet --model_name ${ENCODER_MODEL_NAME}
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py embed-article-chunks $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet --model_name ${LAWSY_ENCODER_MODEL_NAME}
 
 
 lawsy-create-article-chunk-vector-index:
-	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${OUTPUT_DIR})/lawsy/article_chunks_faiss --dim ${ENCODER_DIM}
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunk_embeddings.parquet $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunks.jsonl $(shell echo ${LAWSY_OUTPUT_DIR})/lawsy/article_chunks_faiss --dim ${LAWSY_ENCODER_DIM}
 
 
 lawsy-prepare: lawsy-create-article-chunks lawsy-embed-article-chunks lawsy-create-article-chunk-vector-index
 
 
 lawsy-run-app:
-	@PATH=".venv/bin:${PATH}" HF_HOME=$(shell echo ${HF_HOME}) PYTHONPATH=src ENCODER_MODEL_NAME=${ENCODER_MODEL_NAME} streamlit run src/lawsy/app/app.py
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src LAWSY_OUTPUT_DIR=${LAWSY_OUTPUT_DIR} streamlit run src/lawsy/app/app.py
 
 
 lawsy-docker-build-app:
@@ -106,15 +90,8 @@ lawsy-docker-push-app: docker-login
 lawsy-docker-run-app:
 	@docker run -it --rm --name lawsy-app \
 	    -v ./src:/app/src \
-        -v ~/.config/gcloud/application_default_credentials.json:/tmp/keys.json:ro \
-        -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys.json \
-		-e GOOGLE_CLOUD_PROJECT=$(shell gcloud config get project) \
+		-v ./.env:/app/.env \
+		-v ./.streamlit:/app/.streamlit \
+		-v ./lawsy_history:/app/lawsy_history \
+		-v ./outputs:/app/outputs \
 		-p 8501:8501 lawsy-app:latest
-
-
-# Kokkai Crawler -----------------------------------------------------------------
-.PHONY: kokkai-crawl-all
-
-
-kokkai-crawl-all:
-	@PATH=".venv/bin:${PATH}" python src/kokkai_crawler/main.py $(shell echo ${OUTPUT_DIR})/data/kokkai/mtgs.jsonl --from-year 1945
