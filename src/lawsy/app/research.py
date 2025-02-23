@@ -85,200 +85,240 @@ def create_research_page():
     messages = []
     query_container.empty()
     logger.info("query: " + query)
-    with st.status("推論中...", expanded=True) as status:
-        content = query
+
+    ph = st.empty()
+    status = st.status("推論中...", expanded=False)
+
+    content = query
+    print(dir(status))
+    with status:
+        status.update(state="running")
         with st.chat_message("user"):
             st.write(content)
-        messages.append({"role": "user", "content": content})
+    ph.empty()
+    with ph.container():
+        with st.chat_message("user"):
+            st.write(content)
+    messages.append({"role": "user", "content": content})
 
-        # refine query
-        if len(query) >= 64:
-            status.update(label="クエリーを検索向けに変換...")
-            query_refiner = QueryRefiner(lm=lm)
-            query_refiner_result = query_refiner(query=query)
-            refined_query = query_refiner_result.refined_query
-            logger.info(f"refined_query: {refined_query}")
-            content = f"検索向けに変換されたクエリー:\n\n{refined_query}"
+    # refine query
+    if len(query) >= 64:
+        status.update(label="クエリーを検索向けに変換...", state="running")
+        query_refiner = QueryRefiner(lm=lm)
+        query_refiner_result = query_refiner(query=query)
+        refined_query = query_refiner_result.refined_query
+        logger.info(f"refined_query: {refined_query}")
+        content = f"検索向けに変換されたクエリー:\n\n{refined_query}"
+        with status:
             with st.chat_message("assistant", avatar=logo):
                 st.write(content)
-            messages.append({"role": "assistant", "content": content})
-        else:
-            refined_query = query
-
-        web_search_results = []
-
-        # free web search
-        if get_config("free_web_search_enabled", True):
-            status.update(label="Web 検索（フリードメイン）...")
-            logger.info("free web search")
-            hits = tavily_search_web_retriever.search(refined_query, k=10)
-            logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
-            web_search_results.extend(hits)
-            content = "\n\n".join(
-                [
-                    "Web 検索結果（フリードメイン）:",
-                    "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
-                ]
-            )
+        ph.empty()
+        with ph.container():
             with st.chat_message("assistant", avatar=logo):
                 st.write(content)
-            messages.append({"role": "assistant", "content": content})
+        messages.append({"role": "assistant", "content": content})
+    else:
+        refined_query = query
 
-        # web search on specified domains
-        if len(get_config("web_search_domains")) > 0:
-            status.update(label="Web 検索（ドメイン指定）...")
-            domains = get_config("web_search_domains")
-            logger.info("web search with domains: " + ", ".join(domains))
-            hits = tavily_search_web_retriever.search(refined_query, k=10, domains=domains)
-            web_search_results.extend(hits)
-            content = "\n\n".join(
-                [
-                    "Web 検索結果（ドメイン指定）:",
-                    "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
-                ]
-            )
-            with st.chat_message("assistant", avatar=logo):
-                st.write(content)
-            messages.append({"role": "assistant", "content": content})
+    web_search_results = []
 
-        # query expansion
-        status.update(label="クエリー展開...")
-        query_expander = QueryExpander(lm=lm)
-        web_search_result_texts = []
-        for i, result in enumerate(web_search_results, start=1):
-            web_search_result_texts.append(f"[{i}] {result.title}\n{result.snippet}")
-        web_search_results_text = "\n\n".join(web_search_result_texts)
-        query_expander_result = query_expander(query=query, web_search_results=web_search_results_text)
-        logger.info(
-            " ".join(
-                [
-                    "[query expansion]",
-                    f"(in) query: {len(query)} chars",
-                    f"(in) web_search_results: {len(web_search_results_text)} chars",
-                    f"(out) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
-                ]
-            )
-        )
-        expanded_queries = [query] + query_expander_result.topics
+    # free web search
+    if get_config("free_web_search_enabled", True):
+        status.update(label="Web 検索（フリードメイン）...", state="running")
+        logger.info("free web search")
+        hits = tavily_search_web_retriever.search(refined_query, k=10)
+        logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
+        web_search_results.extend(hits)
         content = "\n\n".join(
             [
-                "展開されたクエリー:",
-                "\n\n".join([f"[{i}] {topic}" for i, topic in enumerate(query_expander_result.topics, start=1)]),
+                "Web 検索結果（フリードメイン）:",
+                "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
             ]
         )
-        with st.chat_message("assistant", avatar=logo):
-            st.write(content)
-        messages.append({"role": "assistant", "content": content})
-
-        # article search
-        status.update(label="法令検索...")
-        article_search_results = []
-        query_vectors = text_encoder.get_query_embeddings(expanded_queries)
-        for expanded_query, query_vector in zip(expanded_queries, query_vectors):
-            logger.info("vector search: " + expanded_query)
-            hits = vector_search_article_retriever.search(query_vector, k=10)
-            article_search_results.extend(hits)
-            logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
-            content = "\n\n".join(
-                [
-                    "法令検索結果:",
-                    expanded_query,
-                    "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
-                ]
-            )
+        with status:
             with st.chat_message("assistant", avatar=logo):
                 st.write(content)
-            messages.append({"role": "assistant", "content": content})
-        # fusion by bi-encoder
-        status.update(label="収集したナレッジのリランキング...")
-        url_to_articles = {result.url: result for result in article_search_results}
-        unique_article_search_results = list(url_to_articles.values())
-        url_to_web_pages = {
-            result.url: result for result in web_search_results if result.url not in url_to_articles
-        }  # 法令もURLをもつので除外
-        unique_web_search_results = list(url_to_web_pages.values())
-        rich_query = construct_query_for_fusion(expanded_queries=expanded_queries)
-        dim = vector_search_article_retriever.vector_dim
-        rich_query_vec = text_encoder.get_query_embeddings([rich_query])[0][:dim]
-        web_page_vecs = text_encoder.get_document_embeddings(
-            [result.title + "\n" + result.snippet for result in unique_web_search_results]
-        )[:, :dim]
-        article_vecs = np.asarray(
-            [vector_search_article_retriever.get_vector(result) for result in unique_article_search_results]
-        )
-        search_results = unique_web_search_results + unique_article_search_results
-        vecs = np.vstack([web_page_vecs, article_vecs])
-        vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
-        cossims = vecs.dot(rich_query_vec / np.linalg.norm(rich_query_vec))
-        index = np.argsort(cossims)[::-1]
-        search_results = [search_results[i] for i in index]
-        content = "\n\n".join(
-            [
-                f"リランキングされたナレッジ（全 {len(search_results)} 件）:",
-                *[f"[{i}] {result.title}" for i, result in enumerate(search_results, start=1)],
-            ]
-        )
-        with st.chat_message("assistant", avatar=logo):
-            st.write(content)
+        ph.empty()
+        with ph.container():
+            with st.chat_message("assistant", avatar=logo):
+                st.write(content)
         messages.append({"role": "assistant", "content": content})
 
-        # knowledge selection
-        status.update(label="レポート作成に参照するナレッジの抽出...")
-        references = []
-        seen = set()
-        total_length = 0
-        for i, result in enumerate(search_results, start=1):
-            if result.source_type == "article":
-                if (result.rev_id, result.anchor) in seen:
-                    continue
-                chunk_after_title = "\n".join(result.snippet.split("\n")[1:])
-                reference = f"[{i}] {result.title}\n{chunk_after_title[:1024]}"
-                references.append(reference)
-                total_length += len(reference)
-                seen.add((result.rev_id, result.anchor))
-            elif result.source_type == "web":
-                if result.url in seen:
-                    continue
-                reference = f"[{i}] {result.title}\n{result.snippet}"
-                references.append(reference)
-                total_length += len(reference)
-                seen.add(result.url)
-            if len(seen) >= 200 or total_length >= 100000:  # max 128k tokens for GPT-4o
-                break
-        logger.info(f"effective knowledges: {len(seen)}")
-        content = f"レポート作成に参照するナレッジを抽出（全 {len(seen)} 件）"
-        with st.chat_message("assistant", avatar=logo):
-            st.write(content)
-        messages.append({"role": "assistant", "content": content})
-
-        # create outline
-        status.update(label="アウトラインの生成...")
-        outline_creater = OutlineCreater(lm=lm)
-        outline_creater_result = outline_creater(
-            query=query, topics=query_expander_result.topics, references=references
-        )
+    # web search on specified domains
+    if len(get_config("web_search_domains")) > 0:
+        status.update(label="Web 検索（ドメイン指定）...", state="running")
+        domains = get_config("web_search_domains")
+        logger.info("web search with domains: " + ", ".join(domains))
+        hits = tavily_search_web_retriever.search(refined_query, k=10, domains=domains)
+        web_search_results.extend(hits)
         content = "\n\n".join(
             [
-                "生成されたアウトライン:",
-                f"```{outline_creater_result.outline.to_text()}```",
+                "Web 検索結果（ドメイン指定）:",
+                "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
             ]
         )
+        with status:
+            with st.chat_message("assistant", avatar=logo):
+                st.write(content)
+        ph.empty()
+        with ph.container():
+            with st.chat_message("assistant", avatar=logo):
+                st.write(content)
+        messages.append({"role": "assistant", "content": content})
+
+    # query expansion
+    status.update(label="クエリー展開...", state="running")
+    query_expander = QueryExpander(lm=lm)
+    web_search_result_texts = []
+    for i, result in enumerate(web_search_results, start=1):
+        web_search_result_texts.append(f"[{i}] {result.title}\n{result.snippet}")
+    web_search_results_text = "\n\n".join(web_search_result_texts)
+    query_expander_result = query_expander(query=query, web_search_results=web_search_results_text)
+    logger.info(
+        " ".join(
+            [
+                "[query expansion]",
+                f"(in) query: {len(query)} chars",
+                f"(in) web_search_results: {len(web_search_results_text)} chars",
+                f"(out) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
+            ]
+        )
+    )
+    expanded_queries = [query] + query_expander_result.topics
+    content = "\n\n".join(
+        [
+            "展開されたクエリー:",
+            "\n\n".join([f"[{i}] {topic}" for i, topic in enumerate(query_expander_result.topics, start=1)]),
+        ]
+    )
+    with status:
         with st.chat_message("assistant", avatar=logo):
             st.write(content)
-        messages.append({"role": "assistant", "content": content})
-        logger.info(
-            " ".join(
-                [
-                    "[outline_creater]",
-                    f"(in) query: {len(query)} chars",
-                    f"(in) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
-                    f"(in) references: {sum([len(ref) for ref in references])} chars",
-                    f"(out) outline: {len(outline_creater_result.outline.to_text())} chars",
-                ]
-            )
+    ph.empty()
+    with ph.container():
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+    messages.append({"role": "assistant", "content": content})
+
+    # article search
+    status.update(label="法令検索...", state="running")
+    article_search_results = []
+    query_vectors = text_encoder.get_query_embeddings(expanded_queries)
+    for expanded_query, query_vector in zip(expanded_queries, query_vectors):
+        logger.info("vector search: " + expanded_query)
+        hits = vector_search_article_retriever.search(query_vector, k=10)
+        article_search_results.extend(hits)
+        logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
+        content = "\n\n".join(
+            [
+                "法令検索結果:",
+                expanded_query,
+                "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
+            ]
         )
-        # complete
-        status.update(label="complete", state="complete", expanded=False)
+        with status:
+            with st.chat_message("assistant", avatar=logo):
+                st.write(content)
+        ph.empty()
+        with ph.container():
+            with st.chat_message("assistant", avatar=logo):
+                st.write(content)
+        messages.append({"role": "assistant", "content": content})
+    # fusion by bi-encoder
+    status.update(label="収集したナレッジのリランキング...", state="running")
+    url_to_articles = {result.url: result for result in article_search_results}
+    unique_article_search_results = list(url_to_articles.values())
+    url_to_web_pages = {
+        result.url: result for result in web_search_results if result.url not in url_to_articles
+    }  # 法令もURLをもつので除外
+    unique_web_search_results = list(url_to_web_pages.values())
+    rich_query = construct_query_for_fusion(expanded_queries=expanded_queries)
+    dim = vector_search_article_retriever.vector_dim
+    rich_query_vec = text_encoder.get_query_embeddings([rich_query])[0][:dim]
+    web_page_vecs = text_encoder.get_document_embeddings(
+        [result.title + "\n" + result.snippet for result in unique_web_search_results]
+    )[:, :dim]
+    article_vecs = np.asarray(
+        [vector_search_article_retriever.get_vector(result) for result in unique_article_search_results]
+    )
+    search_results = unique_web_search_results + unique_article_search_results
+    vecs = np.vstack([web_page_vecs, article_vecs])
+    vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
+    cossims = vecs.dot(rich_query_vec / np.linalg.norm(rich_query_vec))
+    index = np.argsort(cossims)[::-1]
+    search_results = [search_results[i] for i in index]
+    content = "\n\n".join(
+        [
+            f"リランキングされたナレッジ（全 {len(search_results)} 件）:",
+            *[f"[{i}] {result.title}" for i, result in enumerate(search_results, start=1)],
+        ]
+    )
+    with status:
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+    ph.empty()
+    with ph.container():
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+    messages.append({"role": "assistant", "content": content})
+
+    # knowledge selection
+    status.update(label="レポート作成に参照するナレッジの抽出...", state="running")
+    references = []
+    seen = set()
+    total_length = 0
+    for i, result in enumerate(search_results, start=1):
+        if result.source_type == "article":
+            if (result.rev_id, result.anchor) in seen:
+                continue
+            chunk_after_title = "\n".join(result.snippet.split("\n")[1:])
+            reference = f"[{i}] {result.title}\n{chunk_after_title[:1024]}"
+            references.append(reference)
+            total_length += len(reference)
+            seen.add((result.rev_id, result.anchor))
+        elif result.source_type == "web":
+            if result.url in seen:
+                continue
+            reference = f"[{i}] {result.title}\n{result.snippet}"
+            references.append(reference)
+            total_length += len(reference)
+            seen.add(result.url)
+        if len(seen) >= 200 or total_length >= 100000:  # max 128k tokens for GPT-4o
+            break
+    logger.info(f"effective knowledges: {len(seen)}")
+
+    # create outline
+    status.update(label="アウトラインの生成...", state="running")
+    outline_creater = OutlineCreater(lm=lm)
+    outline_creater_result = outline_creater(query=query, topics=query_expander_result.topics, references=references)
+    content = "\n\n".join(
+        [
+            "生成されたアウトライン:",
+            f"```{outline_creater_result.outline.to_text()}```",
+        ]
+    )
+    with status:
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+    ph.empty()
+    with ph.container():
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+    messages.append({"role": "assistant", "content": content})
+    logger.info(
+        " ".join(
+            [
+                "[outline_creater]",
+                f"(in) query: {len(query)} chars",
+                f"(in) topics: {sum([len(topic) for topic in query_expander_result.topics])} chars",
+                f"(in) references: {sum([len(ref) for ref in references])} chars",
+                f"(out) outline: {len(outline_creater_result.outline.to_text())} chars",
+            ]
+        )
+    )
+    # complete
+    status.update(label="Reasoning Details", state="complete", expanded=False)
+    ph.empty()
 
     id2reference = {i: search_result for i, search_result in enumerate(search_results, start=1)}
 
