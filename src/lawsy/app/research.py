@@ -95,7 +95,7 @@ def create_research_page():
             }
             </style>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         warning_text = (
             '<p class="custom-text-warning">'

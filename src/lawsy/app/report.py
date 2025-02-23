@@ -72,7 +72,7 @@ def create_report_page(report: Report):
             }
             </style>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         warning_text = (
             '<p class="custom-text-warning">'
