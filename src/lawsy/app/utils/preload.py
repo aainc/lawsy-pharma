@@ -13,7 +13,7 @@ from lawsy.retriever.web_search.tavily_search import TavilySearchWebRetriever
 from lawsy.utils.logging import logger
 
 dotenv.load_dotenv()
-output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
+output_dir = Path(os.getenv("LAWSY_OUTPUT_DIR", "outputs"))
 
 
 @st.cache_resource
@@ -33,7 +33,7 @@ def load_article_chunks() -> dict:
 def load_text_encoder(dim: int | None = None) -> ME5Instruct | OpenAITextEmbedding:
     with st.spinner("loading text encoder..."):
         logger.info("loading text encoder...")
-        model_name = os.getenv("ENCODER_MODEL_NAME")
+        model_name = os.getenv("LAWSY_ENCODER_MODEL_NAME")
         prefix = model_name.split("/")[0] if model_name is not None else None
         if model_name is None or prefix == "openai":
             return OpenAITextEmbedding(dim=dim)

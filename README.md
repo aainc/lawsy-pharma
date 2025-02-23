@@ -24,7 +24,6 @@ make install
 Create .env file and put it in the repository root directory.
 
 ```text
-OUTPUT_DIR=./outputs  # path to the directory in which processed data are placed
 OPENAI_API_KEY=sk-...  # OpenAI API KEY
 TAVILY_API_KEY=tvly-...  # Tavly API KEY
 ```

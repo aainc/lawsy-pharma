@@ -16,8 +16,8 @@ from lawsy.app.utils.preload import (
 from lawsy.utils.logging import logger
 
 dotenv.load_dotenv()
-data_dir = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))
-output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
+data_dir = Path(os.getenv("LAWSY_DATA_DIR", "data"))
+output_dir = Path(os.getenv("LAWSY_OUTPUT_DIR", "outputs"))
 icon_path = Path(__file__).parent / "Lawsy_logo_circle.png"
 
 st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
