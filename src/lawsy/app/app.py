@@ -19,7 +19,6 @@ dotenv.load_dotenv()
 data_dir = Path(os.getenv("LAWSY_DATA_DIR", "data"))
 output_dir = Path(os.getenv("LAWSY_OUTPUT_DIR", "outputs"))
 icon_path = Path(__file__).parent / "Lawsy_logo_circle.png"
-icon_logofield_path = Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
 
 st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
 

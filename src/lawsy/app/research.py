@@ -15,7 +15,9 @@ from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
 from lawsy.app.config import get_config
 from lawsy.app.report import REPORT_PAGES, create_report_page
-from lawsy.app.styles.decorate_html import get_hiddenbox_ref_html
+from lawsy.app.styles.decorate_html import (
+    get_hiddenbox_ref_html,
+)
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
