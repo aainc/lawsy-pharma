@@ -1,15 +1,11 @@
 ---
 name: Feature Request
 about: Suggest an idea for this project
-title: "[Feature Request] xxx"
-labels: ''
+title: ""
+labels: 'enhancement'
 assignees: ''
 
 ---
 
-## Problem
-- 
+## Detail
 
-## Solution [optional]
-
-## Notes
