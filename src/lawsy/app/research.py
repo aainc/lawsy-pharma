@@ -368,6 +368,9 @@ def create_research_page():
         ref_ids = sorted(ref_ids)
         refs = []
         for ref_id in ref_ids:
+            if ref_id not in id2reference:
+                logger.warning(f"invalid ref_id: {ref_id}")
+                continue
             ref = id2reference[ref_id]
             refs.append(f"[{ref_id}] " + ref.title + "\n" + ref.snippet)
         refs = "\n\n".join(refs)
@@ -385,7 +388,7 @@ def create_research_page():
 
     stream_lead_writer = StreamLeadWriter(lm=lm)
     report_draft = "\n".join(
-        ["# " + outline.title, "[リード文]"]
+        ["# " + outline.title]
         + [writer.section_content for writer in stream_section_writers]
         + ["## 結論", conclusion]
     )

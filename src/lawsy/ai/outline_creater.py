@@ -3,6 +3,8 @@ import re
 import dspy
 from pydantic import BaseModel
 
+from lawsy.utils.logging import logger
+
 
 class CreateOutline(dspy.Signature):
     """あなたは、ニュースを常にフォローしつつ、日本の法令に精通している専門家です。収集された情報源をもとに、下記のクエリーに対するレポートとして適切なアウトラインと簡潔なタイトルを作成してください。また、最後にレポートのタイトルを作成してください。結論パートは絶対に作成しないでください。
@@ -20,7 +22,7 @@ class CreateOutline(dspy.Signature):
        - 必要に応じて、さらに下位の階層も同様に2つ以上生成すること。
     5. 引用情報の記載方法
        - 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載
-       - 引用番号はサブセクションの次の行に記載すること。
+       - 引用番号はサブセクションの次の行に記載すること。セクション、サブセクションの行には引用番号はつけない。
        - "### Title [3][4]" のように同じ行に引用番号を記載してはならない
     6. Markdownフォーマットに関するルール
        - "## 結論"という結論パートは絶対に作成してはいけない
@@ -28,6 +30,7 @@ class CreateOutline(dspy.Signature):
        - "#### Title"というサブサブセクションは作成しないこと
        - ナンバリングは不要
        - "#", "##", "###" の階層のみ作成すること
+    7. 各行はタイトル、セクション、サブセクション、引用番号のいずれかでそれ以外の情報を記載してはならない
 
     【出力例】
     # レポートタイトル
@@ -42,7 +45,7 @@ class CreateOutline(dspy.Signature):
     ### サブセクション2
     [2][24][51]
     ### サブセクション3
-    [29][11][4][156]
+    [29][11][4][56]
     ...
 
     【不適切な出力例】
@@ -50,6 +53,7 @@ class CreateOutline(dspy.Signature):
     ## セクション1
     ### サブセクション1 [4][67]    // 引用はサブセクションの行にはつけない
     [4][67]
+    このサブセクションでは...    // 説明文など要求していない不要な行は削除
     ### サブセクション2 [30][28][1][27][102]    // 同上
     [30][28][1][27][102]
     ## セクション2
@@ -58,7 +62,7 @@ class CreateOutline(dspy.Signature):
     ### サブセクション: yyy    // 「サブセクション: 」という修飾はNG
     [2][24][51]
     ### サブセクション3
-    [29][11][4][156]
+    [29][11][4][156]     // （引用が例えば110までしかない場合）156は存在しない引用
     """  # noqa: E501
 
     query = dspy.InputField(desc="クエリー", format=str)
@@ -85,12 +89,14 @@ class FixOutline(dspy.Signature):
        - 今後必要となるので、"### Title"のサブセクションタイトル作成の際には参照した条文の引用番号を記載
        - 引用番号はサブセクションの次の行に記載すること。
        - "### Title [3][4]" のように同じ行に引用番号を記載してはならない
+       - 存在しない引用番号を引用してはならない
     6. Markdownフォーマットに関するルール
        - "## 結論"という結論パートは絶対に作成してはいけない
        - 出力には "# Title", "## Title"、"### Title"、"#### Title" などのMarkdown形式のタイトル以外のテキストを一切含めないこと
        - "#### Title"というサブサブセクションは作成しないこと
        - ナンバリングは不要
        - "#", "##", "###" の階層のみ作成すること
+    7. 各行はタイトル、セクション、サブセクション、引用番号のいずれかでそれ以外情報を決して記載しない
 
 
     【修正が必要な入力アウトライン例】
@@ -100,6 +106,7 @@ class FixOutline(dspy.Signature):
     ## セクション1
     ### サブセクション1 [4][67]    // 引用はサブセクションの行にはつけない
     [4][67]
+    このサブセクションでは...    // 説明文など要求していない不要な行は削除
     ### サブセクション2 [30][28][1][27][102]    // 同上
     [30][28][1][27][102]
     ## セクション2
@@ -108,7 +115,7 @@ class FixOutline(dspy.Signature):
     ### サブセクション: yyy    // 「サブセクション: 」という修飾はNG
     [2][24][51]
     ### サブセクション3
-    [29][11][4][156]
+    [29][11][4][56]
     ```
 
     【修正済みアウトライン例】
@@ -126,7 +133,7 @@ class FixOutline(dspy.Signature):
     ### yyy
     [2][24][51]
     ### サブセクション3
-    [29][11][4][156]
+    [29][11][4][56]
     ```
     """  # noqa: E501
 
@@ -224,6 +231,8 @@ class OutlineCreater(dspy.Module):
                 topics=topics_text,
                 references=references_text,
             )
+            logger.info(f"created outline: \n{create_outline_result.outline}")
             fix_outline_result = self.fix_outline(outline=create_outline_result.outline)
+            logger.info(f"fixed outline: \n{fix_outline_result.fixed_outline}")
         parsed_outline = self.__parse_outline(fix_outline_result.fixed_outline)
         return dspy.Prediction(outline=parsed_outline)
