@@ -11,4 +11,6 @@ markmap:
 
 {mindmap}
 """
-    return markmap(data, height=400)
+    num_subheaders = len([line for line in mindmap.split("\n") if line.startswith("### ")])
+    height = num_subheaders * 25
+    return markmap(data, height=height)
