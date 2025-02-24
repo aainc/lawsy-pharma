@@ -114,7 +114,6 @@ def create_research_page():
     status = st.status("推論中...", expanded=False)
 
     content = query
-    print(dir(status))
     with status:
         status.update(state="running")
         with st.chat_message("user"):
