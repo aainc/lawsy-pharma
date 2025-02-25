@@ -36,14 +36,6 @@ lint:
 	@PATH=".venv/bin:${PATH}" pyright src
 
 
-# Docker -------------------------------------------------------------------------
-.PHONY: docker-login
-
-
-docker-login:
-	@gcloud auth print-access-token | docker login -u oauth2accesstoken https://asia-northeast1-docker.pkg.dev --password-stdin
-
-
 # Lawsy --------------------------------------------------------------------------
 .PHONY:	lawsy-download-preprocessed-data \
         lawsy-create-article-chunks \
@@ -81,10 +73,6 @@ lawsy-run-app:
 
 lawsy-docker-build-app:
 	@docker build --platform=linux/amd64 -t lawsy-app -f src/lawsy/app/Dockerfile .
-
-
-lawsy-docker-push-app: docker-login
-	@docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/law-dx-hackathon-2025/lawsy/lawsy-app:latest -f src/lawsy/app/Dockerfile . --push
 
 
 lawsy-docker-run-app:
