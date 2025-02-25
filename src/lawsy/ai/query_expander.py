@@ -29,7 +29,7 @@ class GenerateDetailedTopics(dspy.Signature):
 
     query = dspy.InputField(desc="クエリー", format=str)
     web_search_results = dspy.InputField(desc="Web検索結果", format=str)
-    topics = dspy.OutputField(desc="topics", format=str)
+    topics = dspy.OutputField(desc="リストアップされた検索トピック", format=str)
 
 
 def cleanse_topic(topic: str) -> str:
