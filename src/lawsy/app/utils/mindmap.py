@@ -11,6 +11,7 @@ markmap:
 
 {mindmap}
 """
+    num_headers = len([line for line in mindmap.split("\n") if line.startswith("## ")])
     num_subheaders = len([line for line in mindmap.split("\n") if line.startswith("### ")])
-    height = num_subheaders * 25
+    height = 15 * (num_subheaders + num_headers) + 200
     return markmap(data, height=height)
