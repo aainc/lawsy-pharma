@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- Python
-    - `uv pip install uv`
+- uv
+    - `pip install uv`
 - OpenAI
     - `OPENAI_API_KEY`
 
