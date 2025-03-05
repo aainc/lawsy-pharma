@@ -10,7 +10,6 @@ class DuckDuckGoSearchWebRetriever:
         if domains is None:
             domains = []
         query = query + " " + " OR ".join([f"site:{domain}" for domain in domains])
-        print(query)
         assert k > 0
         response = DDGS().text(query, region="jp-jp", max_results=k)
         results = [
