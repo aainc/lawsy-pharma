@@ -54,3 +54,10 @@ lint:
 ```shell
 make lint
 ```
+
+## References
+
+ブログ記事
+
+- 2025-03-16 [行政と技術の融合へ—法令Deep ResearchツールLawsyの開発記録](https://note.com/policygarage/n/nbea6a40f9a0a)
+- 2025-03-06 [法令 Deep Research ツール Lawsy を OSS として公開しました](https://note.com/tatsuyashirakawa/n/nbda706503902)
