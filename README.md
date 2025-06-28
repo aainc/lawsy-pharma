@@ -6,6 +6,8 @@
     - `pip install uv`
 - OpenAI
     - `OPENAI_API_KEY`
+- GCloud CLI
+    - https://cloud.google.com/sdk/docs/install
 
 ## Run
 
