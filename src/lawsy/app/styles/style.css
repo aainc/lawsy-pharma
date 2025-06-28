@@ -93,7 +93,7 @@ input[type="checkbox"]:checked + .toggle-label::before {
     visibility: hidden;
     display: flex;
     flex-direction: column;
-    padding: 5px; 
+    padding: 5px;
     background-color: white;
     color: black;
     text-align: left;
@@ -114,7 +114,7 @@ input[type="checkbox"]:checked + .toggle-label::before {
     word-wrap: break-word;
     flex-wrap: nowrap;
     font-size: 90%;
-    margin: 5px; 
+    margin: 5px;
 }
 
 .tooltip-header {
@@ -154,3 +154,19 @@ input[type="checkbox"]:checked + .toggle-label::before {
     list-style-position: inside;
 }
 */
+
+/* 印刷時にサイドバーを非表示にする */
+@media print {
+    .stSidebar,
+    [data-testid="stSidebarCollapsedControl"],
+    .stElementToolbar
+    {
+        display: none !important;
+    }
+    .toggle-label::before {
+        display: none !important; /* ▶/▼ アイコンを非表示 */
+    }
+    .toggle-box {
+        display: block !important;
+    }
+}
