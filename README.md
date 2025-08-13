@@ -139,6 +139,7 @@ make lawsy-run-app
 |--------|------|------------|-----|
 | `OPENAI_API_KEY` | OpenAI APIキー | （必須） | `sk-...` |
 | `LAWSY_LM` | 使用するLLMモデル | `openai/gpt-4o-mini` | `openai/gpt-4o` |
+| `LAWSY_VIOLATION_SUMMARY_LM` | 違反サマリー生成専用LM | `LAWSY_LM`と同じ | `anthropic/claude-3-5-sonnet-latest` |
 | `LAWSY_WEB_SEARCH_ENGINE` | Web検索エンジン | `DuckDuckGo` | `Google` |
 | `LAWSY_VIOLATION_SUMMARY_MAX_ITEMS` | 違反サマリーの最大表示数 | `10` | `5` |
 | `LAWSY_HISTORY_DIR` | 履歴保存ディレクトリ | `./lawsy_history` | `/path/to/history` |

@@ -91,6 +91,14 @@ def create_research_page():
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
+    # サマリー専用LM（指定がなければ通常のLMを使用）
+    summary_lm_name = os.getenv("LAWSY_VIOLATION_SUMMARY_LM", lm_name)
+    if summary_lm_name != lm_name:
+        summary_lm = load_lm(summary_lm_name)
+        logger.info(f"using separate LM for violation summary: {summary_lm_name}")
+    else:
+        summary_lm = lm
+
     logo_col, _ = st.columns([1, 5])
     with logo_col:
         st.image(get_logotitle_path())
@@ -451,7 +459,7 @@ def create_research_page():
 
     # レポート完成後に違反サマリーを生成
     status.update(label="違反・問題点の分析...", state="running")
-    violation_summarizer = ViolationSummarizer(lm=lm)
+    violation_summarizer = ViolationSummarizer(lm=summary_lm)
     violation_analysis = violation_summarizer(query=query, report_content=report_content)
     logger.info(f"Violation analysis generated: {violation_analysis}")
 
