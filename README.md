@@ -2,9 +2,13 @@
 
 薬事法令に特化した法令Deep Researchツール
 
+## 謝辞
+
+Lawsy Pharma は Lawsy からフォークして作成されました、素晴らしいツールを開発してくれた Lawsy Team に感謝します。
+
 ## 📋 Overview
 
-Lawsyは、日本の薬事法令（薬機法、GCP省令、GMP省令など）に関する質問に対して、関連法令を検索・分析し、包括的なレポートを生成するAIツールです。
+Lawsy Pharma は、日本の薬事法令（薬機法、GCP省令、GMP省令など）に関する質問に対して、関連法令を検索・分析し、包括的なレポートを生成するAIツールです。
 
 ### 主な機能
 - 🔍 薬事法令の高精度検索
@@ -15,11 +19,11 @@ Lawsyは、日本の薬事法令（薬機法、GCP省令、GMP省令など）に
 
 ## 🚀 Quick Start (薬事法版)
 
-薬事法に特化したLawsyを最速で起動する方法：
+薬事法に特化したLawsy Pharma を起動する方法：
 
 ```bash
 # 1. リポジトリのクローン
-git clone https://github.com/lawsy-jp/lawsy.git
+git clone https://github.com/happy-ryo/lawsy.git
 cd lawsy
 
 # 2. 依存関係のインストール
@@ -49,10 +53,6 @@ make pharma-run
 - OpenAI API Key
   - [OpenAI Platform](https://platform.openai.com/)でAPIキーを取得
 
-### オプション
-- GCloud CLI（プリセットデータを使用する場合）
-  - https://cloud.google.com/sdk/docs/install
-
 ## 🔧 Installation
 
 ### 1. 依存関係のインストール
@@ -75,7 +75,7 @@ cp .env.example .env
 OPENAI_API_KEY=sk-...
 
 # オプション（デフォルト値あり）
-LAWSY_LM=openai/gpt-4o-mini
+LAWSY_LM=openai/gpt-5-mini
 LAWSY_WEB_SEARCH_ENGINE=DuckDuckGo
 LAWSY_VIOLATION_SUMMARY_MAX_ITEMS=10
 LAWSY_HISTORY_DIR=./lawsy_history
@@ -109,14 +109,6 @@ make pharma-embed-article-chunks
 
 # 5. ベクトルインデックスを作成
 make pharma-create-article-chunk-vector-index
-```
-
-### プリセットデータセット（代替案）
-
-事前に準備されたデータセットをダウンロード：
-
-```bash
-make lawsy-download-preprocessed-data
 ```
 
 ## 🎮 使い方
@@ -184,31 +176,6 @@ make help  # 全コマンドの一覧表示
 - `make format` - コードフォーマット
 - `make lint` - リントチェック
 
-## 🐛 Troubleshooting
-
-### よくある問題と解決方法
-
-#### OpenAI APIエラー
-```
-Error: Unsupported parameter: 'max_tokens'
-```
-→ 最新版を使用していることを確認してください
-
-#### メモリ不足エラー
-→ エンベディング生成時にメモリ不足になる場合は、バッチサイズを調整してください
-
-#### ポート使用中エラー
-```
-Error: Port 8502 is in use
-```
-→ 別のポートを指定するか、使用中のプロセスを終了してください
-
-## 📚 References
-
-### ブログ記事
-- [行政と技術の融合へ—法令Deep ResearchツールLawsyの開発記録](https://note.com/policygarage/n/nbea6a40f9a0a)
-- [法令 Deep Research ツール Lawsy を OSS として公開しました](https://note.com/tatsuyashirakawa/n/nbda706503902)
-
 ### 技術スタック
 - **Frontend**: Streamlit
 - **LLM**: OpenAI GPT-4 / GPT-4o-mini
@@ -223,12 +190,7 @@ MIT License
 ## 🤝 Contributing
 
 プルリクエストを歓迎します！
-バグ報告や機能要望は[Issues](https://github.com/lawsy-jp/lawsy/issues)にお願いします。
+バグ報告や機能要望は[Issues](https://github.com/happy-ryo/lawsy/issues)にお願いします。
 
-## 👥 Authors
-
-- Lawsy Team
-
----
 
 **注意**: 本ツールの回答は必ずしも正確とは限りません。薬事に関する重要な判断は、必ず専門家に確認してください。
