@@ -54,6 +54,37 @@ def create_report_page(report: Report):
         title, lead = title_and_lead.split("\n", 1)
         # title
         st.write(title)
+        
+        # 違反・問題サマリーを表示（research.pyからの遷移後も表示）
+        logger.info(f"Report has violation_analysis: {hasattr(report, 'violation_analysis')}")
+        if hasattr(report, 'violation_analysis'):
+            logger.info(f"violation_analysis content: {report.violation_analysis}")
+        
+        if hasattr(report, 'violation_analysis') and report.violation_analysis:
+            with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if report.violation_analysis.get("specific_problems") and len(report.violation_analysis["specific_problems"]) > 0:
+                        st.markdown("**🚨 何が問題なのか**")
+                        for i, problem in enumerate(report.violation_analysis["specific_problems"], 1):
+                            st.error(f"**問題 {i}**: {problem['problem']}")
+                            st.caption(f"根拠: {problem['source']}")
+                    else:
+                        st.info("具体的な問題は検出されませんでした。")
+                
+                with col2:
+                    if report.violation_analysis.get("specific_laws") and len(report.violation_analysis["specific_laws"]) > 0:
+                        st.markdown("**📖 どの法律に違反しているのか**")
+                        for i, law in enumerate(report.violation_analysis["specific_laws"], 1):
+                            st.warning(f"**該当法律 {i}**: {law['keyword']} ({law['type']})")
+                            st.caption(f"正式名称: {law['full_name']}")
+                            if law.get('relevant_text'):
+                                with st.expander(f"関連条文"):
+                                    st.text(law['relevant_text'][:200] + "...")
+                    else:
+                        st.info("該当する法律は特定されませんでした。")
+        
         st.write(lead)
         draw_mindmap(report.mindmap)
         tooltips = get_reference_tooltip_html(report.references)

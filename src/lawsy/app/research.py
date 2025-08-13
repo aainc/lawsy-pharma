@@ -28,10 +28,101 @@ from lawsy.app.utils.preload import (
 from lawsy.app.utils.web_retreiver import load_web_retriever
 from lawsy.app.templates.pharma_templates import get_template_categories, get_templates_by_category
 from lawsy.utils.logging import logger
+from typing import List, Dict
+from lawsy.retriever.search_result import BaseSearchResult
 
 
 def get_logo_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_circle.png"
+
+
+def analyze_specific_violations_and_laws(query: str, search_results: List[BaseSearchResult], outline) -> Dict:
+    """具体的な違反内容と該当法律を分析"""
+    
+    # 1. クエリから具体的な問題を特定
+    specific_problems = []
+    specific_laws = []
+    
+    # 検索結果から具体的な違反・問題を抽出
+    for result in search_results[:10]:
+        if result.source_type == "article":
+            snippet = result.snippet.lower()
+            title = result.title.lower()
+            
+            # 違反キーワードの検出
+            violation_keywords = ["違反", "禁止", "義務", "必須", "承認", "届出", "申請", "基準"]
+            if any(keyword in snippet or keyword in title for keyword in violation_keywords):
+                # 具体的な問題を抽出
+                problem_desc = _extract_specific_problem(result.snippet, query)
+                if problem_desc:
+                    specific_problems.append({
+                        "problem": problem_desc,
+                        "source": result.title,
+                        "url": str(result.url)
+                    })
+                
+                # 該当法律を特定
+                law_info = _identify_specific_law(result.title, result.snippet)
+                if law_info and law_info not in specific_laws:
+                    specific_laws.append(law_info)
+    
+    return {
+        "specific_problems": specific_problems[:3],  # 上位3つの具体的問題
+        "specific_laws": specific_laws[:3],  # 上位3つの該当法律
+        "has_violations": len(specific_problems) > 0
+    }
+
+
+def _extract_specific_problem(snippet: str, query: str) -> str:
+    """スニペットとクエリから具体的な問題を抽出"""
+    # 問題を示すキーフレーズを検索
+    problem_patterns = {
+        "承認": "必要な承認手続きが不十分または未実施の可能性",
+        "届出": "法定届出が適切に行われていない可能性", 
+        "申請": "必要な申請手続きに不備がある可能性",
+        "基準": "法定基準を満たしていない可能性",
+        "義務": "法的義務の履行に不備がある可能性",
+        "禁止": "法的に禁止されている行為を実施している可能性",
+        "違反": "法令違反の可能性"
+    }
+    
+    query_lower = query.lower()
+    snippet_lower = snippet.lower()
+    
+    for pattern, description in problem_patterns.items():
+        if pattern in query_lower or pattern in snippet_lower:
+            return description
+    
+    # デフォルトの問題記述
+    if any(keyword in query_lower for keyword in ["問題", "違反", "適法"]):
+        return "法令遵守状況に要確認事項がある可能性"
+    
+    return ""
+
+
+def _identify_specific_law(title: str, snippet: str) -> Dict:
+    """タイトルとスニペットから具体的な法律・条文を特定"""
+    law_mappings = {
+        "薬機法": {"full_name": "医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律", "type": "基本法"},
+        "薬事法": {"full_name": "医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律", "type": "基本法"},
+        "GCP省令": {"full_name": "医薬品の臨床試験の実施の基準に関する省令", "type": "治験関連"},
+        "GMP省令": {"full_name": "医薬品及び医薬部外品の製造管理及び品質管理の基準に関する省令", "type": "製造関連"},
+        "GPSP省令": {"full_name": "医薬品の製造販売後の調査及び試験の実施の基準に関する省令", "type": "安全管理関連"},
+        "GVP省令": {"full_name": "医薬品の製造販売後安全管理の基準に関する省令", "type": "安全管理関連"}
+    }
+    
+    for keyword, info in law_mappings.items():
+        if keyword in title:
+            return {
+                "keyword": keyword,
+                "full_name": info["full_name"],
+                "type": info["type"],
+                "relevant_text": snippet[:150] + "..." if len(snippet) > 150 else snippet
+            }
+    
+    return None
+
+
 
 
 def get_logotitle_path() -> Path:
@@ -368,11 +459,43 @@ def create_research_page():
     # show
     outline = outline_creater_result.outline
     st.write("# " + outline.title)  # title
+    summary_box = st.empty()  # summary（元々のパターンに従う）
     lead_box = st.empty()  # lead
     mindmap_box = st.empty()  # mindmap
     section_boxes = [st.empty() for _ in outline.section_outlines]  # section
     conclusion_header_box = st.empty()
     conclusion_box = st.empty()  # conclusion
+    
+    # 分析を実行（後でレポートに保存するため）
+    violation_analysis = analyze_specific_violations_and_laws(query, search_results, outline)
+    
+    # summary_boxをmindmap_boxと同じタイミングで更新（順序が重要）
+    with summary_box.container():
+        st.markdown("**⚠️ 具体的な問題・違反と該当法律**")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if violation_analysis.get("specific_problems") and len(violation_analysis["specific_problems"]) > 0:
+                st.markdown("**🚨 何が問題なのか**")
+                for i, problem in enumerate(violation_analysis["specific_problems"], 1):
+                    st.error(f"**問題 {i}**: {problem['problem']}")
+                    st.caption(f"根拠: {problem['source']}")
+            else:
+                st.info("具体的な問題は検出されませんでした。")
+        
+        with col2:
+            if violation_analysis.get("specific_laws") and len(violation_analysis["specific_laws"]) > 0:
+                st.markdown("**📖 どの法律に違反しているのか**")
+                for i, law in enumerate(violation_analysis["specific_laws"], 1):
+                    st.warning(f"**該当法律 {i}**: {law['keyword']} ({law['type']})")
+                    st.caption(f"正式名称: {law['full_name']}")
+                    if law.get('relevant_text'):
+                        with st.expander(f"関連条文"):
+                            st.text(law['relevant_text'][:200] + "...")
+            else:
+                st.info("該当する法律は特定されませんでした。")
+
     with mindmap_box.container():
         mindmap = outline.to_text()
         logger.info("mindmap :\n" + mindmap)
@@ -420,7 +543,7 @@ def create_research_page():
         + [writer.section_content for writer in stream_section_writers]
         + ["## 結論", conclusion]
     )
-
+    
     st.write("## References")
     for i, result in enumerate(search_results, start=1):
         html = get_hiddenbox_ref_html(i, result)
@@ -434,6 +557,7 @@ def create_research_page():
         jst = now.astimezone(ZoneInfo("Asia/Tokyo"))
         title = jst.strftime("%Y-%m-%d %H:%M:%S.%f")
     references = []
+    logger.info(f"Creating report with violation_analysis: {violation_analysis}")
     new_report = Report(
         id=str(uuid4()),
         timestamp=now.timestamp(),
@@ -446,7 +570,9 @@ def create_research_page():
         references=search_results,  # reference = search result for now
         search_results=search_results,
         messages=messages,
+        violation_analysis=violation_analysis,  # 違反分析結果を保存
     )
+    logger.info(f"Report created with violation_analysis: {hasattr(new_report, 'violation_analysis')}")
     new_report.save(get_config("history_dir"))
     REPORT_PAGES[new_report.id] = st.Page(
         create_report_page(new_report), title=new_report.title, url_path=new_report.id
