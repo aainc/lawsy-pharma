@@ -98,7 +98,7 @@ def create_research_page():
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
-            placeholder=\"薬機法について何でも聞いてください！\",
+            placeholder="薬機法について何でも聞いてください！",
             key="research_page_query_chat_input",
         )
         st.markdown(
