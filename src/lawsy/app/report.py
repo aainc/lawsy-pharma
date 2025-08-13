@@ -91,26 +91,17 @@ def create_report_page(report: Report):
 
             config = severity_config.get(severity, severity_config["medium"])
 
-            # 問題の表示
-            config["func"](f"{config['icon']} **問題 {index} [重要度: {config['label']}]**: {problem_text}")
-
-            # 該当箇所の表示
+            # すべての情報を1つのボックスにまとめて表示
+            message_parts = [f"{config['icon']} **問題 {index} [重要度: {config['label']}]**", ""]
+            message_parts.append(f"**問題内容:** {problem_text}")
+            
             if evidence:
-                if severity == "high":
-                    st.error(f"📌 質問の該当箇所: 「{evidence}」")
-                elif severity == "medium":
-                    st.warning(f"📌 質問の該当箇所: 「{evidence}」")
-                else:
-                    st.info(f"📌 質問の該当箇所: 「{evidence}」")
-
-            # 推奨対応方法の表示
+                message_parts.append(f"**該当箇所:** 「{evidence}」")
+            
             if recommended_action:
-                if severity == "high":
-                    st.error(f"✅ **推奨対応**: {recommended_action}")
-                elif severity == "medium":
-                    st.warning(f"✅ **推奨対応**: {recommended_action}")
-                else:
-                    st.info(f"✅ **推奨対応**: {recommended_action}")
+                message_parts.append(f"**推奨対応:** {recommended_action}")
+            
+            config["func"]("\n\n".join(message_parts))
 
         if hasattr(report, "violation_analysis") and report.violation_analysis:
             with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):
