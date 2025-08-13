@@ -1,29 +1,49 @@
 import os
+from typing import Dict
+
 import dspy
-from typing import Dict, List
+
 from lawsy.utils.logging import logger
 
 
 def create_violation_summary_signature(max_items: int = 10):
     """動的にViolationSummaryシグネチャを作成"""
+
     class ViolationSummary(dspy.Signature):
         __doc__ = f"""あなたは日本の薬事法令に精通した専門家です。
-        ユーザーの質問内容とレポート内容を分析し、以下の2点を簡潔にまとめてください：
-        
+        ユーザーの質問内容とレポート内容を分析し、以下の3点を簡潔にまとめてください：
+
         1. 何が問題なのか（具体的な問題点・違反の可能性）
         2. どの法律に違反しているのか（該当する具体的な法律・省令）
-        
+        3. 問題の重要度（高・中・低の3段階評価）
+
         【極めて重要な指示】
         - **evidenceフィールドには、ユーザーの質問文から問題となる具体的な記述を必ず引用**
         - レポートからの引用は絶対に使用しない
         - ユーザーが「〜したい」「〜できますか」「〜について」と書いた部分をそのまま引用
         - 引用は正確に、省略せずに、原文のまま記載すること
-        
+
+        【重要度判定基準】
+        **高（high）**: 法令違反・行政処分の可能性が高い問題
+        - 薬機法の直接的違反（未承認医薬品販売、虚偽・誇大広告など）
+        - 重大な安全性問題（有害事象隠蔽、品質管理不備など）
+        - 刑事罰・業務停止の可能性がある行為
+
+        **中（medium）**: 改善が必要だが緊急性は中程度の問題
+        - 表示基準違反、手続き不備
+        - ガイドライン逸脱、軽微な広告表現問題
+        - 行政指導レベルの問題
+
+        **低（low）**: 推奨事項レベルの軽微な問題
+        - 業界慣行からの逸脱
+        - 軽微な記載不備、推奨事項の不遵守
+        - 予防的観点からの改善点
+
         【重要な制限事項】
         - **薬事法関連の法律・省令のみを対象とすること**
         - 景表法、独占禁止法、個人情報保護法などの薬事法以外の法律は除外
         - 薬事法と併記されていても、薬事法以外の法律単独での違反は取り上げない
-        
+
         【対象とする薬事法関連法令】
         - 薬機法（医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律）
         - GCP省令（医薬品の臨床試験の実施の基準に関する省令）
@@ -33,25 +53,27 @@ def create_violation_summary_signature(max_items: int = 10):
         - QMS省令（医療機器及び体外診断用医薬品の製造管理及び品質管理の基準に関する省令）
         - GQP省令（医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令）
         - その他の薬事関連省令・通知
-        
+
         【分析のポイント】
         - ユーザーの質問文を分析し、薬事法的に問題となりうる行為・状況を特定
         - 問題となる箇所は必ずユーザーの質問文から原文のまま引用
         - 該当する法律はレポートの内容を参考に特定
         - 問題点は{max_items}個まで、法律も{max_items}個までに絞って最も重要なものを選択
-        
+        - 各問題について重要度を適切に判定
+
         【引用の例】
         ユーザーの質問: 「未承認の新薬をインターネットで販売したいのですが可能ですか」
         正しいevidence: 「未承認の新薬をインターネットで販売したい」
         間違ったevidence: 「薬機法第68条により未承認医薬品の広告は禁止」（これはレポートからの引用なのでNG）
-        
+
         【出力形式】
         JSON形式で以下の構造を返してください：
         {{
             "specific_problems": [
                 {{
                     "problem": "問題の内容（簡潔に）",
-                    "evidence": "ユーザーの質問文から問題となる箇所を正確に引用（必須）"
+                    "evidence": "ユーザーの質問文から問題となる箇所を正確に引用（必須）",
+                    "severity": "重要度（high/medium/low）"
                 }}
             ],
             "specific_laws": [
@@ -64,11 +86,11 @@ def create_violation_summary_signature(max_items: int = 10):
             ]
         }}
         """
-        
+
         query: str = dspy.InputField(desc="ユーザーの質問内容")
         report_content: str = dspy.InputField(desc="生成されたレポート全文")
         violation_summary: str = dspy.OutputField(desc="違反分析結果（JSON形式）")
-    
+
     return ViolationSummary
 
 
@@ -82,32 +104,43 @@ class ViolationSummarizer(dspy.Module):
         # 動的にシグネチャを作成
         ViolationSummaryClass = create_violation_summary_signature(self.max_items)
         self.summarize = dspy.Predict(ViolationSummaryClass)
-    
+
     def forward(self, query: str, report_content: str) -> Dict:
         """レポート内容から違反・問題点を分析"""
         import json
-        
+
         with dspy.settings.context(lm=self.lm):
-            result = self.summarize(
-                query=query,
-                report_content=report_content
-            )
-            
+            result = self.summarize(query=query, report_content=report_content)
+
         try:
             # JSON文字列をパース
             violation_data = json.loads(result.violation_summary)
-            
+
             # データの整形と検証
             specific_problems = violation_data.get("specific_problems", [])
             specific_laws = violation_data.get("specific_laws", [])
-            
+
             # 薬事法関連法令のキーワードリスト
             pharma_law_keywords = [
-                "薬機法", "薬事法", "GCP", "GMP", "GPSP", "GVP", "QMS", "GQP",
-                "医薬品", "医療機器", "体外診断", "再生医療", "製造販売",
-                "臨床試験", "治験", "品質管理", "安全管理"
+                "薬機法",
+                "薬事法",
+                "GCP",
+                "GMP",
+                "GPSP",
+                "GVP",
+                "QMS",
+                "GQP",
+                "医薬品",
+                "医療機器",
+                "体外診断",
+                "再生医療",
+                "製造販売",
+                "臨床試験",
+                "治験",
+                "品質管理",
+                "安全管理",
             ]
-            
+
             # 薬事法関連のみをフィルタリング
             filtered_laws = []
             for law in specific_laws:
@@ -117,11 +150,11 @@ class ViolationSummarizer(dspy.Module):
                     filtered_laws.append(law)
                     if len(filtered_laws) >= self.max_items:
                         break
-            
+
             # max_itemsで制限
-            specific_problems = specific_problems[:self.max_items]
-            specific_laws = filtered_laws[:self.max_items]
-            
+            specific_problems = specific_problems[: self.max_items]
+            specific_laws = filtered_laws[: self.max_items]
+
             # 法律名のマッピング（正式名称が不足している場合の補完）
             law_mappings = {
                 "薬機法": "医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律",
@@ -131,25 +164,21 @@ class ViolationSummarizer(dspy.Module):
                 "GPSP省令": "医薬品の製造販売後の調査及び試験の実施の基準に関する省令",
                 "GVP省令": "医薬品の製造販売後安全管理の基準に関する省令",
                 "QMS省令": "医療機器及び体外診断用医薬品の製造管理及び品質管理の基準に関する省令",
-                "GQP省令": "医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令"
+                "GQP省令": "医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令",
             }
-            
+
             # 法律情報の補完
             for law in specific_laws:
                 if "full_name" not in law and law.get("keyword") in law_mappings:
                     law["full_name"] = law_mappings[law["keyword"]]
-            
+
             return {
                 "specific_problems": specific_problems,
                 "specific_laws": specific_laws,
-                "has_violations": len(specific_problems) > 0
+                "has_violations": len(specific_problems) > 0,
             }
-            
+
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse violation summary JSON: {e}")
             # フォールバック：空の結果を返す
-            return {
-                "specific_problems": [],
-                "specific_laws": [],
-                "has_violations": False
-            }
+            return {"specific_problems": [], "specific_laws": [], "has_violations": False}

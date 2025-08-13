@@ -19,6 +19,7 @@ from lawsy.app.report import REPORT_PAGES, create_report_page
 from lawsy.app.styles.decorate_html import (
     get_hiddenbox_ref_html,
 )
+from lawsy.app.templates.pharma_templates import get_template_categories, get_templates_by_category
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
@@ -27,7 +28,6 @@ from lawsy.app.utils.preload import (
     load_vector_search_article_retriever,
 )
 from lawsy.app.utils.web_retreiver import load_web_retriever
-from lawsy.app.templates.pharma_templates import get_template_categories, get_templates_by_category
 from lawsy.utils.logging import logger
 
 
@@ -114,30 +114,31 @@ def create_research_page():
             unsafe_allow_html=True,
         )
         warning_text = (
-            '<p class="custom-text-warning">'
-            "　 ※Lawsy Pharmaの回答は必ずしも正しいとは限りません。薬事に関する重要な情報は必ず確認するようにしてください。"
-            "</p>"
-        )
+        '<p class="custom-text-warning">'
+        "　 ※Lawsy Pharmaの回答は必ずしも正しいとは限りません。"
+        "薬事に関する重要な情報は必ず確認するようにしてください。"
+        "</p>"
+    )
         st.markdown(warning_text, unsafe_allow_html=True)
-    
+
     # 薬事法検索テンプレートの表示
     with st.expander("💊 薬事法検索テンプレート", expanded=False):
         st.write("よく検索される薬事関連トピックから選択できます")
-        
+
         # カテゴリ選択
         categories = get_template_categories()
         selected_category = st.selectbox("カテゴリを選択", categories, index=0)
-        
+
         # テンプレート選択
         templates = get_templates_by_category(selected_category)
         if templates:
             selected_template = st.selectbox("テンプレートを選択", ["選択してください"] + templates)
-            
+
             if selected_template != "選択してください":
                 if st.button("このテンプレートで検索", type="primary"):
                     query = selected_template
                     st.rerun()
-    
+
     if not query:
         return
 
@@ -389,7 +390,7 @@ def create_research_page():
     lead_box = st.empty()  # lead
     mindmap_box = st.empty()  # mindmap
     section_boxes = [st.empty() for _ in outline.section_outlines]  # section
-    
+
     with mindmap_box.container():
         mindmap = outline.to_text()
         logger.info("mindmap :\n" + mindmap)
@@ -417,11 +418,11 @@ def create_research_page():
         await asyncio.gather(*tasks)
 
     asyncio.run(finish_section_writing())
-    
+
     # 結論を生成
     report_draft = "\n".join(["# " + outline.title] + [writer.section_content for writer in stream_section_writers])
     stream_conclusion_writer = StreamConclusionWriter(lm)
-    
+
     # 結論セクションを表示
     logger.info("Starting conclusion generation")
     with conclusion_section.container():
@@ -447,46 +448,83 @@ def create_research_page():
         + [writer.section_content for writer in stream_section_writers]
         + ["## 結論", conclusion]
     )
-    
+
     # レポート完成後に違反サマリーを生成
     status.update(label="違反・問題点の分析...", state="running")
     violation_summarizer = ViolationSummarizer(lm=lm)
     violation_analysis = violation_summarizer(query=query, report_content=report_content)
     logger.info(f"Violation analysis generated: {violation_analysis}")
-    
+
     # サマリーを表示
+    def get_severity_order(severity):
+        """重要度の順序を返す（高→中→低）"""
+        order_map = {"high": 0, "medium": 1, "low": 2}
+        return order_map.get(severity, 3)  # 不明な重要度は最後
+
+    def display_problem_with_severity(problem, index):
+        """重要度に応じた問題の表示"""
+        severity = problem.get("severity", "medium")
+        problem_text = problem.get("problem", "")
+        evidence = problem.get("evidence", "")
+
+        # 重要度に応じたアイコンと表示関数
+        severity_config = {
+            "high": {"icon": "🔴", "label": "高", "func": st.error},
+            "medium": {"icon": "🟡", "label": "中", "func": st.warning},
+            "low": {"icon": "🔵", "label": "低", "func": st.info},
+        }
+
+        config = severity_config.get(severity, severity_config["medium"])
+
+        # 問題の表示
+        config["func"](f"{config['icon']} **問題 {index} [重要度: {config['label']}]**: {problem_text}")
+
+        # 該当箇所の表示
+        if evidence:
+            if severity == "high":
+                st.error(f"📌 質問の該当箇所: 「{evidence}」")
+            elif severity == "medium":
+                st.warning(f"📌 質問の該当箇所: 「{evidence}」")
+            else:
+                st.info(f"📌 質問の該当箇所: 「{evidence}」")
+
     with summary_box.container():
         with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 if violation_analysis.get("specific_problems") and len(violation_analysis["specific_problems"]) > 0:
                     st.markdown("**🚨 何が問題なのか**")
-                    for i, problem in enumerate(violation_analysis["specific_problems"], 1):
-                        st.error(f"**問題 {i}**: {problem['problem']}")
-                        if problem.get('evidence'):
-                            st.warning(f"📌 質問の該当箇所: 「{problem['evidence']}」")
+
+                    # 重要度でソート（高→中→低）
+                    sorted_problems = sorted(
+                        violation_analysis["specific_problems"],
+                        key=lambda x: get_severity_order(x.get("severity", "medium")),
+                    )
+
+                    for i, problem in enumerate(sorted_problems, 1):
+                        display_problem_with_severity(problem, i)
                 else:
                     st.info("具体的な問題は検出されませんでした。")
-            
+
             with col2:
                 if violation_analysis.get("specific_laws") and len(violation_analysis["specific_laws"]) > 0:
                     st.markdown("**📖 どの法律に違反しているのか**")
                     for i, law in enumerate(violation_analysis["specific_laws"], 1):
-                        st.warning(f"**該当法律 {i}**: {law.get('keyword', '不明')} ({law.get('type', '')})") 
-                        if law.get('full_name'):
+                        st.warning(f"**該当法律 {i}**: {law.get('keyword', '不明')} ({law.get('type', '')})")
+                        if law.get("full_name"):
                             st.caption(f"正式名称: {law['full_name']}")
-                        if law.get('relevant_articles'):
+                        if law.get("relevant_articles"):
                             st.caption(f"関連条文: {law['relevant_articles']}")
                 else:
                     st.info("該当する法律は特定されませんでした。")
-    
+
     # 結論セクションは既に表示済み（上記のwrite_conclusion_asyncで表示）
     # ここでの重複表示を削除
-    
-    # complete  
+
+    # complete
     status.update(label="Reasoning Details", state="complete", expanded=False)
-    
+
     st.write("## References")
     for i, result in enumerate(search_results, start=1):
         html = get_hiddenbox_ref_html(i, result)
