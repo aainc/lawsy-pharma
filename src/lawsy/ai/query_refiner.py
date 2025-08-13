@@ -1,4 +1,5 @@
 import dspy
+
 from lawsy.ai.pharma_query_processor import enhance_pharma_query
 
 
@@ -29,11 +30,8 @@ class QueryRefiner(dspy.Module):
         # 薬事専門用語処理を適用
         pharma_enhanced = enhance_pharma_query(query)
         enhanced_query = pharma_enhanced["enhanced_query"]
-        
+
         with dspy.settings.context(lm=self.lm):
             refine_query_result = self.refine_query(query=enhanced_query)
-        
-        return dspy.Prediction(
-            refined_query=refine_query_result.refined_query,
-            pharma_context=pharma_enhanced
-        )
+
+        return dspy.Prediction(refined_query=refine_query_result.refined_query, pharma_context=pharma_enhanced)

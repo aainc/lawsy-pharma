@@ -180,13 +180,13 @@ class OutlineCreater(dspy.Module):
     @staticmethod
     def __parse_outline(outline) -> Outline:
         """アウトライン文字列を解析してOutlineオブジェクトを生成
-        
+
         Args:
             outline: 解析対象のアウトライン文字列
-            
+
         Returns:
             Outline: 解析されたアウトラインオブジェクト
-            
+
         Raises:
             ValueError: アウトラインの形式が不正な場合
         """
@@ -196,7 +196,7 @@ class OutlineCreater(dspy.Module):
         section_outlines = []
         subsection_outlines = []
         reference_ids = []
-        
+
         for line in outline.splitlines():
             if not line.strip():
                 continue
@@ -210,9 +210,7 @@ class OutlineCreater(dspy.Module):
                 if section_title is not None:
                     # セクションに子セクションがない場合はダミーセクションを追加
                     if len(subsection_outlines) == 0:
-                        subsection_outlines.append(
-                            SubsectionOutline(title="概要", reference_ids=[])
-                        )
+                        subsection_outlines.append(SubsectionOutline(title="概要", reference_ids=[]))
                     section_outlines.append(
                         SectionOutline(title=section_title, subsection_outlines=subsection_outlines)
                     )
@@ -235,7 +233,7 @@ class OutlineCreater(dspy.Module):
                     subsection_title = None
                     reference_ids = []
                 continue
-                
+
         # 最後のセクション・サブセクションの処理
         if subsection_title:
             if section_title is None:
@@ -246,20 +244,19 @@ class OutlineCreater(dspy.Module):
         elif section_title is not None and len(subsection_outlines) > 0:
             # セクションタイトルはあるがサブセクションタイトルがない場合
             section_outlines.append(SectionOutline(title=section_title, subsection_outlines=subsection_outlines))
-            
+
         # レポートタイトルがない場合はデフォルトを設定
         if report_title is None:
             report_title = "調査レポート"
-            
+
         # セクションが一つもない場合はデフォルトセクションを追加
         if len(section_outlines) == 0:
             section_outlines.append(
                 SectionOutline(
-                    title="概要", 
-                    subsection_outlines=[SubsectionOutline(title="調査結果", reference_ids=[])]
+                    title="概要", subsection_outlines=[SubsectionOutline(title="調査結果", reference_ids=[])]
                 )
             )
-            
+
         return Outline(title=report_title, section_outlines=section_outlines)
 
     def forward(self, query: str, topics: list, references: list[str]) -> dspy.Prediction:

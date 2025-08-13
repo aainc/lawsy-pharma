@@ -9,8 +9,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "医薬品の一部変更承認申請の要件と注意点",
             "承認申請における照会事項への対応方法",
             "CTD（共通技術文書）の作成要領と留意事項",
-            "承認審査期間の短縮制度（先駆け審査指定等）について"
-        ]
+            "承認審査期間の短縮制度（先駆け審査指定等）について",
+        ],
     },
     "GMP関連": {
         "title": "GMP（医薬品製造管理・品質管理）",
@@ -20,8 +20,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "GMP査察での指摘事項と改善対応策",
             "製造所におけるバリデーション実施要領",
             "逸脱処理とCAPAシステムの運用方法",
-            "原薬製造におけるGMP管理の注意点"
-        ]
+            "原薬製造におけるGMP管理の注意点",
+        ],
     },
     "臨床試験": {
         "title": "GCP・治験関連",
@@ -31,8 +31,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "GCP査察での確認事項と対応方法",
             "治験における有害事象報告の要件と手続き",
             "被験者の同意取得プロセスと同意書作成",
-            "治験薬の管理と品質確保について"
-        ]
+            "治験薬の管理と品質確保について",
+        ],
     },
     "安全性": {
         "title": "GVP・安全性情報",
@@ -42,8 +42,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "定期的安全性最新報告書（PSUR）の作成方法",
             "安全性情報の収集体制と評価プロセス",
             "リスク管理計画（RMP）の策定と実施",
-            "緊急安全性情報の配布基準と手続き"
-        ]
+            "緊急安全性情報の配布基準と手続き",
+        ],
     },
     "市販後調査": {
         "title": "GPSP・市販後調査",
@@ -53,8 +53,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "特定使用成績調査における対象患者選定",
             "製造販売後臨床試験の実施要領",
             "市販後調査データの信頼性確保",
-            "調査結果の解析と当局報告"
-        ]
+            "調査結果の解析と当局報告",
+        ],
     },
     "許可・免許": {
         "title": "許可・免許制度",
@@ -64,8 +64,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "製造業許可における構造設備基準",
             "許可更新時の注意事項と準備事項",
             "総括製造販売責任者の要件と責務",
-            "製造所における責任技術者の役割"
-        ]
+            "製造所における責任技術者の役割",
+        ],
     },
     "薬機法改正": {
         "title": "薬機法改正・制度変更",
@@ -75,8 +75,8 @@ PHARMA_SEARCH_TEMPLATES = {
             "添付文書の記載要領変更に伴う対応",
             "医療機器プログラムの薬機法上の取扱い",
             "条件付き早期承認制度の活用方法",
-            "薬事規制の国際調和への対応"
-        ]
+            "薬事規制の国際調和への対応",
+        ],
     },
     "品質管理": {
         "title": "品質管理・品質保証",
@@ -86,9 +86,9 @@ PHARMA_SEARCH_TEMPLATES = {
             "規格及び試験方法の設定根拠",
             "安定性試験の実施要領と評価方法",
             "変更管理システムの構築と運用",
-            "供給者管理と委託先監査"
-        ]
-    }
+            "供給者管理と委託先監査",
+        ],
+    },
 }
 
 
@@ -116,7 +116,7 @@ def search_templates(keyword):
     """キーワードでテンプレートを検索"""
     matching_templates = []
     keyword_lower = keyword.lower()
-    
+
     for category, data in PHARMA_SEARCH_TEMPLATES.items():
         # カテゴリ名での検索
         if keyword_lower in category.lower() or keyword_lower in data["title"].lower():
@@ -126,5 +126,5 @@ def search_templates(keyword):
             for template in data["templates"]:
                 if keyword_lower in template.lower():
                     matching_templates.append((template, category))
-    
+
     return matching_templates

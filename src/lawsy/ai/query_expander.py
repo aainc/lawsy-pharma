@@ -1,4 +1,5 @@
 import dspy
+
 from lawsy.ai.pharma_query_processor import enhance_pharma_query
 
 
@@ -53,21 +54,18 @@ class QueryExpander(dspy.Module):
         # 薬事専門用語処理を適用
         pharma_enhanced = enhance_pharma_query(query)
         enhanced_query = pharma_enhanced["enhanced_query"]
-        
+
         with dspy.settings.context(lm=self.lm):
             generate_detailed_topics_result = self.generate_detailed_topics(
                 query=enhanced_query, web_search_results=web_search_results
             )
             topics = [cleanse_topic(topic) for topic in generate_detailed_topics_result.topics.split("\n")]
             topics = [topic for topic in topics if topic]
-            
+
             # 薬事関連法令情報を追加トピックとして含める
             relevant_regulations = pharma_enhanced["relevant_regulations"]
             for regulation in relevant_regulations[:3]:  # 上位3つまで
                 if regulation not in topics:
                     topics.append(regulation)
-                    
-        return dspy.Prediction(
-            topics=topics,
-            pharma_context=pharma_enhanced
-        )
+
+        return dspy.Prediction(topics=topics, pharma_context=pharma_enhanced)

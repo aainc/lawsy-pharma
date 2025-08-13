@@ -16,7 +16,7 @@ def load_lm(model_name: str, **kwargs) -> dspy.LM:
     else:
         kwargs = dict(max_completion_tokens=8192, temperature=0.0, cache=False, **kwargs)
     # Remove max_tokens to avoid conflict with max_completion_tokens
-    kwargs.pop('max_tokens', None)
+    kwargs.pop("max_tokens", None)
     assert len(model_name.split("/")) == 2
     provider = model_name.split("/")[0]
     if provider == "openai":
@@ -36,9 +36,9 @@ def load_lm(model_name: str, **kwargs) -> dspy.LM:
             lm = dspy.LM(model_name, **kwargs)  # type: ignore
     else:
         raise ValueError(f"provider must be one of [openai, anthropic, gemini, vertex_ai] but {provider} was given")
-    
+
     # Remove max_tokens from LM kwargs to avoid conflict with max_completion_tokens
-    if hasattr(lm, 'kwargs') and 'max_tokens' in lm.kwargs:
-        lm.kwargs.pop('max_tokens', None)
-    
+    if hasattr(lm, "kwargs") and "max_tokens" in lm.kwargs:
+        lm.kwargs.pop("max_tokens", None)
+
     return lm
