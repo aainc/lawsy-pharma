@@ -441,7 +441,12 @@ def create_research_page():
                     for i, problem in enumerate(violation_analysis["specific_problems"], 1):
                         st.error(f"**問題 {i}**: {problem['problem']}")
                         if problem.get('evidence'):
-                            st.caption(f"根拠: {problem['evidence'][:100]}...")
+                            evidence_text = problem['evidence']
+                            if len(evidence_text) > 200:
+                                with st.expander("根拠を表示"):
+                                    st.caption(evidence_text)
+                            else:
+                                st.caption(f"根拠: {evidence_text}")
                 else:
                     st.info("具体的な問題は検出されませんでした。")
             
