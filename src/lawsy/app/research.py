@@ -44,7 +44,7 @@ def construct_query_for_fusion(expanded_queries: list[str]) -> str:
     topics = expanded_queries[1:]
     return "\n".join(
         [
-            "以下の内容に関する薬事法令解説文書を作るにあたって参考になるWebページや薬事関連法令がほしい",
+            "以下の内容に関する薬機法令解説文書を作るにあたって参考になるWebページや薬機関連法令がほしい",
             "",
             "主題となるクエリー: " + query,
             "関連するトピック:",
@@ -98,7 +98,7 @@ def create_research_page():
     with st.container():
         query_container = st.empty()
         query = query_container.chat_input(
-            placeholder="薬事法について何でも聞いてください！",
+            placeholder=\"薬機法について何でも聞いてください！\",
             key="research_page_query_chat_input",
         )
         st.markdown(
@@ -121,9 +121,9 @@ def create_research_page():
         )
         st.markdown(warning_text, unsafe_allow_html=True)
 
-    # 薬事法検索テンプレートの表示
-    with st.expander("💊 薬事法検索テンプレート", expanded=False):
-        st.write("よく検索される薬事関連トピックから選択できます")
+    # 薬機法検索テンプレートの表示
+    with st.expander("💊 薬機法検索テンプレート", expanded=False):
+        st.write("よく検索される薬機関連トピックから選択できます")
 
         # カテゴリ選択
         categories = get_template_categories()
