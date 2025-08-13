@@ -45,7 +45,13 @@ lint:
         lawsy-run-app \
 		lawsy-docker-build-app \
 		lawsy-docker-push-app \
-		lawsy-docker-run-app
+		lawsy-docker-run-app \
+		pharma-download-laws \
+		pharma-process-xml \
+		pharma-create-article-chunks \
+		pharma-embed-article-chunks \
+		pharma-create-article-chunk-vector-index \
+		pharma-prepare
 
 
 lawsy-download-preprocessed-data:
@@ -83,3 +89,23 @@ lawsy-docker-run-app:
 		-v ./lawsy_history:/app/lawsy_history \
 		-v ./outputs:/app/outputs \
 		-p 8501:8501 lawsy-app:latest
+
+
+# Pharma-specific targets -------------------------------------------------------
+
+pharma-download-laws:
+	@uv run python src/lawsy/data/pharma_law_downloader.py --output-dir data/pharma_xml --delay 2.0
+
+pharma-process-xml:
+	@uv run python src/lawsy/data/egov_xml_processor.py data/pharma_xml data/pharma_xml_processed
+
+pharma-create-article-chunks:
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunks data/pharma_xml_processed $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunks.jsonl
+
+pharma-embed-article-chunks:
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py embed-article-chunks $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunks.jsonl $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunk_embeddings.parquet --model-name ${LAWSY_ENCODER_MODEL_NAME}
+
+pharma-create-article-chunk-vector-index:
+	@PATH=".venv/bin:${PATH}" PYTHONPATH=src python src/lawsy/main.py create-article-chunk-vector-index $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunk_embeddings.parquet $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunks.jsonl $(shell echo ${LAWSY_OUTPUT_DIR})/pharma/article_chunks_faiss --dim ${LAWSY_ENCODER_DIM}
+
+pharma-prepare: pharma-download-laws pharma-process-xml pharma-create-article-chunks pharma-embed-article-chunks pharma-create-article-chunk-vector-index

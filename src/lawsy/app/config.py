@@ -46,7 +46,7 @@ def init_config():
         set_config(name, value)
 
     _init("free_web_search_enabled", True)
-    _init("web_search_domains", ["go.jp", "courts.go.jp", "shugiin.go.jp", "sangiin.go.jp", "cao.go.jp"])
+    _init("web_search_domains", ["pmda.go.jp", "mhlw.go.jp", "nihs.go.jp", "jpma.or.jp", "jga.gr.jp", "jfrl.or.jp"])
     if is_history_dir_enabled():
         _init("history_dir", "./lawsy_history")
     _init("reasoning_details_display_enabled", False)
@@ -68,7 +68,7 @@ def create_config_page():
 
     # ドメイン指定の検索において指定するドメイン
     name = "web_search_domains"
-    values = get_config(name, ["go.jp", "courts.go.jp", "shugiin.go.jp", "sangiin.go.jp", "cao.go.jp"])
+    values = get_config(name, ["pmda.go.jp", "mhlw.go.jp", "nihs.go.jp", "jpma.or.jp", "jga.gr.jp", "jfrl.or.jp"])
     web_search_domains = st_tags(value=values[:], label="ドメインを限定したWeb検索において参照可能なドメイン一覧")
     if values != web_search_domains:
         set_config(name, web_search_domains)
