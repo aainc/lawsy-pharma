@@ -10,7 +10,11 @@ def load_lm(model_name: str, **kwargs) -> dspy.LM:
     params:
         model_name (str)  ex. openai/gpt-4o  vertex_ai/gemini-2.0-flash-001 anthropic/claude-3-5-sonnet-latest  gemini/gemini-1.5-pro
     """  # noqa: E501
-    kwargs = dict(max_completion_tokens=8192, temperature=0.0, cache=False, **kwargs)
+    # GPT-5 doesn't support temperature=0.0, use default temperature=1.0
+    if "gpt-5" in model_name:
+        kwargs = dict(max_completion_tokens=8192, temperature=1.0, cache=False, **kwargs)
+    else:
+        kwargs = dict(max_completion_tokens=8192, temperature=0.0, cache=False, **kwargs)
     # Remove max_tokens to avoid conflict with max_completion_tokens
     kwargs.pop('max_tokens', None)
     assert len(model_name.split("/")) == 2

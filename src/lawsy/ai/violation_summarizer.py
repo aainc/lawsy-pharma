@@ -8,16 +8,42 @@ def create_violation_summary_signature(max_items: int = 10):
     """動的にViolationSummaryシグネチャを作成"""
     class ViolationSummary(dspy.Signature):
         __doc__ = f"""あなたは日本の薬事法令に精通した専門家です。
-        提供されたレポート内容を分析し、以下の2点を簡潔にまとめてください：
+        ユーザーの質問内容とレポート内容を分析し、以下の2点を簡潔にまとめてください：
         
         1. 何が問題なのか（具体的な問題点・違反の可能性）
         2. どの法律に違反しているのか（該当する具体的な法律・省令）
         
+        【極めて重要な指示】
+        - **evidenceフィールドには、ユーザーの質問文から問題となる具体的な記述を必ず引用**
+        - レポートからの引用は絶対に使用しない
+        - ユーザーが「〜したい」「〜できますか」「〜について」と書いた部分をそのまま引用
+        - 引用は正確に、省略せずに、原文のまま記載すること
+        
+        【重要な制限事項】
+        - **薬事法関連の法律・省令のみを対象とすること**
+        - 景表法、独占禁止法、個人情報保護法などの薬事法以外の法律は除外
+        - 薬事法と併記されていても、薬事法以外の法律単独での違反は取り上げない
+        
+        【対象とする薬事法関連法令】
+        - 薬機法（医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律）
+        - GCP省令（医薬品の臨床試験の実施の基準に関する省令）
+        - GMP省令（医薬品及び医薬部外品の製造管理及び品質管理の基準に関する省令）
+        - GPSP省令（医薬品の製造販売後の調査及び試験の実施の基準に関する省令）
+        - GVP省令（医薬品の製造販売後安全管理の基準に関する省令）
+        - QMS省令（医療機器及び体外診断用医薬品の製造管理及び品質管理の基準に関する省令）
+        - GQP省令（医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令）
+        - その他の薬事関連省令・通知
+        
         【分析のポイント】
-        - レポートの内容から、法的に問題となりうる具体的な事項を抽出
-        - 該当する法律・省令を正確に特定（薬機法、GCP省令、GMP省令、GPSP省令、GVP省令など）
+        - ユーザーの質問文を分析し、薬事法的に問題となりうる行為・状況を特定
+        - 問題となる箇所は必ずユーザーの質問文から原文のまま引用
+        - 該当する法律はレポートの内容を参考に特定
         - 問題点は{max_items}個まで、法律も{max_items}個までに絞って最も重要なものを選択
-        - 憶測や推測は避け、レポートに明記されている内容のみを根拠とする
+        
+        【引用の例】
+        ユーザーの質問: 「未承認の新薬をインターネットで販売したいのですが可能ですか」
+        正しいevidence: 「未承認の新薬をインターネットで販売したい」
+        間違ったevidence: 「薬機法第68条により未承認医薬品の広告は禁止」（これはレポートからの引用なのでNG）
         
         【出力形式】
         JSON形式で以下の構造を返してください：
@@ -25,7 +51,7 @@ def create_violation_summary_signature(max_items: int = 10):
             "specific_problems": [
                 {{
                     "problem": "問題の内容（簡潔に）",
-                    "evidence": "レポート内の根拠となる記述（抜粋）"
+                    "evidence": "ユーザーの質問文から問題となる箇所を正確に引用（必須）"
                 }}
             ],
             "specific_laws": [
@@ -71,9 +97,30 @@ class ViolationSummarizer(dspy.Module):
             # JSON文字列をパース
             violation_data = json.loads(result.violation_summary)
             
-            # データの整形と検証（max_itemsで制限）
-            specific_problems = violation_data.get("specific_problems", [])[:self.max_items]
-            specific_laws = violation_data.get("specific_laws", [])[:self.max_items]
+            # データの整形と検証
+            specific_problems = violation_data.get("specific_problems", [])
+            specific_laws = violation_data.get("specific_laws", [])
+            
+            # 薬事法関連法令のキーワードリスト
+            pharma_law_keywords = [
+                "薬機法", "薬事法", "GCP", "GMP", "GPSP", "GVP", "QMS", "GQP",
+                "医薬品", "医療機器", "体外診断", "再生医療", "製造販売",
+                "臨床試験", "治験", "品質管理", "安全管理"
+            ]
+            
+            # 薬事法関連のみをフィルタリング
+            filtered_laws = []
+            for law in specific_laws:
+                keyword = law.get("keyword", "")
+                # キーワードが薬事法関連かチェック
+                if any(pharma_keyword in keyword for pharma_keyword in pharma_law_keywords):
+                    filtered_laws.append(law)
+                    if len(filtered_laws) >= self.max_items:
+                        break
+            
+            # max_itemsで制限
+            specific_problems = specific_problems[:self.max_items]
+            specific_laws = filtered_laws[:self.max_items]
             
             # 法律名のマッピング（正式名称が不足している場合の補完）
             law_mappings = {
@@ -82,7 +129,9 @@ class ViolationSummarizer(dspy.Module):
                 "GCP省令": "医薬品の臨床試験の実施の基準に関する省令",
                 "GMP省令": "医薬品及び医薬部外品の製造管理及び品質管理の基準に関する省令",
                 "GPSP省令": "医薬品の製造販売後の調査及び試験の実施の基準に関する省令",
-                "GVP省令": "医薬品の製造販売後安全管理の基準に関する省令"
+                "GVP省令": "医薬品の製造販売後安全管理の基準に関する省令",
+                "QMS省令": "医療機器及び体外診断用医薬品の製造管理及び品質管理の基準に関する省令",
+                "GQP省令": "医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令"
             }
             
             # 法律情報の補完

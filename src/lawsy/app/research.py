@@ -31,12 +31,12 @@ from lawsy.app.templates.pharma_templates import get_template_categories, get_te
 from lawsy.utils.logging import logger
 
 
-def get_logo_path() -> Path:
-    return Path(__file__).parent / "Lawsy_logo_circle.png"
-
-
 def get_logotitle_path() -> Path:
     return Path(__file__).parent / "Lawsy_logo_title_long_trans.png"
+
+
+def get_logo_path() -> Path:
+    return Path(__file__).parent / "Lawsy_logo_circle.png"
 
 
 def construct_query_for_fusion(expanded_queries: list[str]) -> str:
@@ -59,6 +59,20 @@ async def write_section(section_placeholder, section_writer, query: str, referen
     async for chunk in section_writer(query, references, section_outline):
         text += chunk
         section_placeholder.write(text)
+
+
+# This function is no longer needed as we're using write_stream directly
+# async def write_conclusion(conclusion_placeholder, conclusion_writer, query: str, report_draft: str):
+#     """結論セクションを非同期で書き込む"""
+#     logger.info("Starting to write conclusion section")
+#     text = "## 結論\n"
+#     conclusion_placeholder.write(text)
+#     chunk_count = 0
+#     async for chunk in conclusion_writer(query, report_draft):
+#         text += chunk
+#         conclusion_placeholder.write(text)
+#         chunk_count += 1
+#     logger.info(f"Conclusion written with {chunk_count} chunks, total length: {len(text)}")
 
 
 def create_research_page():
@@ -370,11 +384,11 @@ def create_research_page():
     outline = outline_creater_result.outline
     st.write("# " + outline.title)  # title
     summary_box = st.empty()  # summary（レポート完成後に生成）
+    conclusion_section = st.empty()  # 結論セクション（サマリーの下に配置）
+    logger.info("Created conclusion_section placeholder")
     lead_box = st.empty()  # lead
     mindmap_box = st.empty()  # mindmap
     section_boxes = [st.empty() for _ in outline.section_outlines]  # section
-    conclusion_header_box = st.empty()
-    conclusion_box = st.empty()  # conclusion
     
     with mindmap_box.container():
         mindmap = outline.to_text()
@@ -403,11 +417,20 @@ def create_research_page():
         await asyncio.gather(*tasks)
 
     asyncio.run(finish_section_writing())
-    conclusion_header_box.write("## 結論")
+    
+    # 結論を生成
     report_draft = "\n".join(["# " + outline.title] + [writer.section_content for writer in stream_section_writers])
     stream_conclusion_writer = StreamConclusionWriter(lm)
-    conclusion_box.write_stream(stream_conclusion_writer(query, report_draft))
+    
+    # 結論セクションを表示
+    logger.info("Starting conclusion generation")
+    with conclusion_section.container():
+        st.write("## 結論")
+        # async generatorを同期的にStreamlitで表示（lead_boxと同じアプローチ）
+        st.write_stream(stream_conclusion_writer(query, report_draft))
     conclusion = stream_conclusion_writer.conclusion
+    logger.info(f"Generated conclusion length: {len(conclusion) if conclusion else 0}")
+    logger.info(f"Conclusion content preview: {conclusion[:100] if conclusion else 'None'}")
 
     stream_lead_writer = StreamLeadWriter(lm=lm)
     report_draft = "\n".join(
@@ -415,6 +438,7 @@ def create_research_page():
         + [writer.section_content for writer in stream_section_writers]
         + ["## 結論", conclusion]
     )
+    # Lead生成（結論の後）
     lead_box.write_stream(stream_lead_writer(query=query, title=outline.title, draft=report_draft))
     lead = stream_lead_writer.lead
 
@@ -441,12 +465,7 @@ def create_research_page():
                     for i, problem in enumerate(violation_analysis["specific_problems"], 1):
                         st.error(f"**問題 {i}**: {problem['problem']}")
                         if problem.get('evidence'):
-                            evidence_text = problem['evidence']
-                            if len(evidence_text) > 200:
-                                with st.expander("根拠を表示"):
-                                    st.caption(evidence_text)
-                            else:
-                                st.caption(f"根拠: {evidence_text}")
+                            st.warning(f"📌 質問の該当箇所: 「{problem['evidence']}」")
                 else:
                     st.info("具体的な問題は検出されませんでした。")
             
@@ -461,6 +480,9 @@ def create_research_page():
                             st.caption(f"関連条文: {law['relevant_articles']}")
                 else:
                     st.info("該当する法律は特定されませんでした。")
+    
+    # 結論セクションは既に表示済み（上記のwrite_conclusion_asyncで表示）
+    # ここでの重複表示を削除
     
     # complete  
     status.update(label="Reasoning Details", state="complete", expanded=False)

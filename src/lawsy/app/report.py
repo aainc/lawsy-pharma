@@ -52,6 +52,16 @@ def create_report_page(report: Report):
         title_and_lead = report.report_content[:pos]
         rest = report.report_content[pos:]
         title, lead = title_and_lead.split("\n", 1)
+        
+        # 結論部分を分離
+        conclusion_pos = rest.find("## 結論")
+        if conclusion_pos >= 0:
+            sections_content = rest[:conclusion_pos]
+            conclusion_content = rest[conclusion_pos:]
+        else:
+            sections_content = rest
+            conclusion_content = ""
+        
         # title
         st.write(title)
         
@@ -70,12 +80,7 @@ def create_report_page(report: Report):
                         for i, problem in enumerate(report.violation_analysis["specific_problems"], 1):
                             st.error(f"**問題 {i}**: {problem['problem']}")
                             if problem.get('evidence'):
-                                evidence_text = problem['evidence']
-                                if len(evidence_text) > 200:
-                                    with st.expander("根拠を表示"):
-                                        st.caption(evidence_text)
-                                else:
-                                    st.caption(f"根拠: {evidence_text}")
+                                st.warning(f"📌 質問の該当箇所: 「{problem['evidence']}」")
                     else:
                         st.info("具体的な問題は検出されませんでした。")
                 
@@ -92,10 +97,17 @@ def create_report_page(report: Report):
                         st.info("該当する法律は特定されませんでした。")
         
         st.write(lead)
+        
+        # 結論をサマリーの下、マインドマップの上に表示
+        if conclusion_content:
+            st.write(conclusion_content)
+        
         draw_mindmap(report.mindmap)
+        
+        # セクション内容を表示（結論を除いた部分）
         tooltips = get_reference_tooltip_html(report.references)
-        rest = embed_tooltips(rest, tooltips)
-        st.write(rest, unsafe_allow_html=True)
+        sections_with_tooltips = embed_tooltips(sections_content, tooltips)
+        st.write(sections_with_tooltips, unsafe_allow_html=True)
         st.markdown("## References")
         for i, result in enumerate(report.references, start=1):
             html = get_hiddenbox_ref_html(i, result)
