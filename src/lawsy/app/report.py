@@ -69,7 +69,8 @@ def create_report_page(report: Report):
                         st.markdown("**🚨 何が問題なのか**")
                         for i, problem in enumerate(report.violation_analysis["specific_problems"], 1):
                             st.error(f"**問題 {i}**: {problem['problem']}")
-                            st.caption(f"根拠: {problem['source']}")
+                            if problem.get('evidence'):
+                                st.caption(f"根拠: {problem['evidence'][:100]}...")
                     else:
                         st.info("具体的な問題は検出されませんでした。")
                 
@@ -77,11 +78,11 @@ def create_report_page(report: Report):
                     if report.violation_analysis.get("specific_laws") and len(report.violation_analysis["specific_laws"]) > 0:
                         st.markdown("**📖 どの法律に違反しているのか**")
                         for i, law in enumerate(report.violation_analysis["specific_laws"], 1):
-                            st.warning(f"**該当法律 {i}**: {law['keyword']} ({law['type']})")
-                            st.caption(f"正式名称: {law['full_name']}")
-                            if law.get('relevant_text'):
-                                with st.expander(f"関連条文"):
-                                    st.text(law['relevant_text'][:200] + "...")
+                            st.warning(f"**該当法律 {i}**: {law.get('keyword', '不明')} ({law.get('type', '')})")
+                            if law.get('full_name'):
+                                st.caption(f"正式名称: {law['full_name']}")
+                            if law.get('relevant_articles'):
+                                st.caption(f"関連条文: {law['relevant_articles']}")
                     else:
                         st.info("該当する法律は特定されませんでした。")
         
