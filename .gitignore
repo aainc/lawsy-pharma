@@ -172,6 +172,7 @@ cython_debug/
 
 # Customized
 data/
+!src/lawsy/data
 outputs/
 .env
 sa.json
