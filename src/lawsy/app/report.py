@@ -80,6 +80,7 @@ def create_report_page(report: Report):
             severity = problem.get("severity", "medium")
             problem_text = problem.get("problem", "")
             evidence = problem.get("evidence", "")
+            recommended_action = problem.get("recommended_action", "")
 
             # 重要度に応じたアイコンと表示関数
             severity_config = {
@@ -101,6 +102,15 @@ def create_report_page(report: Report):
                     st.warning(f"📌 質問の該当箇所: 「{evidence}」")
                 else:
                     st.info(f"📌 質問の該当箇所: 「{evidence}」")
+
+            # 推奨対応方法の表示
+            if recommended_action:
+                if severity == "high":
+                    st.error(f"✅ **推奨対応**: {recommended_action}")
+                elif severity == "medium":
+                    st.warning(f"✅ **推奨対応**: {recommended_action}")
+                else:
+                    st.info(f"✅ **推奨対応**: {recommended_action}")
 
         if hasattr(report, "violation_analysis") and report.violation_analysis:
             with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):

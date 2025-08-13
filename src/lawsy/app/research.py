@@ -114,11 +114,11 @@ def create_research_page():
             unsafe_allow_html=True,
         )
         warning_text = (
-        '<p class="custom-text-warning">'
-        "　 ※Lawsy Pharmaの回答は必ずしも正しいとは限りません。"
-        "薬事に関する重要な情報は必ず確認するようにしてください。"
-        "</p>"
-    )
+            '<p class="custom-text-warning">'
+            "　 ※Lawsy Pharmaの回答は必ずしも正しいとは限りません。"
+            "薬事に関する重要な情報は必ず確認するようにしてください。"
+            "</p>"
+        )
         st.markdown(warning_text, unsafe_allow_html=True)
 
     # 薬事法検索テンプレートの表示
@@ -466,6 +466,7 @@ def create_research_page():
         severity = problem.get("severity", "medium")
         problem_text = problem.get("problem", "")
         evidence = problem.get("evidence", "")
+        recommended_action = problem.get("recommended_action", "")
 
         # 重要度に応じたアイコンと表示関数
         severity_config = {
@@ -487,6 +488,15 @@ def create_research_page():
                 st.warning(f"📌 質問の該当箇所: 「{evidence}」")
             else:
                 st.info(f"📌 質問の該当箇所: 「{evidence}」")
+
+        # 推奨対応方法の表示
+        if recommended_action:
+            if severity == "high":
+                st.error(f"✅ **推奨対応**: {recommended_action}")
+            elif severity == "medium":
+                st.warning(f"✅ **推奨対応**: {recommended_action}")
+            else:
+                st.info(f"✅ **推奨対応**: {recommended_action}")
 
     with summary_box.container():
         with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):
