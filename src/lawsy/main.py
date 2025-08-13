@@ -66,7 +66,9 @@ def embed_article_chunks(
     if provider == "openai":
         from lawsy.encoder.openai import OpenAITextEmbedding
 
-        encoder = OpenAITextEmbedding(model_name)
+        # OpenAIクラスはプレフィックスなしのモデル名を期待
+        actual_model_name = model_name.split("/")[1]
+        encoder = OpenAITextEmbedding(actual_model_name)
     else:
         from lawsy.encoder.me5 import ME5Instruct
 
@@ -149,11 +151,16 @@ def create_article_chunk_vector_index(
         for file_name, anchor in zip(file_names, anchors)
     ]
     # 同一内容の条文は最も古い日時のみを残す
-    df = pd.DataFrame(meta_data)
-    df["date"] = df["file_name"].apply(lambda file_name: datetime.strptime(file_name.split("_")[1], "%Y%m%d"))
-    index = df.sort_values("date")["chunk"].drop_duplicates().index
-    embeddings = embeddings[index]
-    meta_data = [meta_data[idx] for idx in index]
+    # 薬事法データの場合は日付形式ではないため、重複排除をスキップ
+    try:
+        df = pd.DataFrame(meta_data)
+        df["date"] = df["file_name"].apply(lambda file_name: datetime.strptime(file_name.split("_")[1], "%Y%m%d"))
+        index = df.sort_values("date")["chunk"].drop_duplicates().index
+        embeddings = embeddings[index]
+        meta_data = [meta_data[idx] for idx in index]
+    except ValueError:
+        # 日付形式でない場合（薬事法データなど）は重複排除をスキップ
+        pass
     retriever.add(embeddings, meta_data)
     retriever.save(output_dir)
 

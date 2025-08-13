@@ -27,6 +27,7 @@ class Report(BaseModel):
     messages: list[dict[str, str]] | None = (
         None  # reasoning history in chat completion messages format (a list of {"role": ..., "content": ...})
     )
+    violation_analysis: dict | None = None  # 違反・問題分析結果
 
     @staticmethod
     def from_dict(d: dict) -> "Report":
@@ -49,6 +50,7 @@ class Report(BaseModel):
             references=[reference.model_dump(mode="json") for reference in self.references],
             search_results=[search_result.model_dump(mode="json") for search_result in self.search_results],
             messages=self.messages,
+            violation_analysis=self.violation_analysis,  # 追加：違反分析結果も保存
         )
 
     def save(self, history_dir: Path | str) -> None:

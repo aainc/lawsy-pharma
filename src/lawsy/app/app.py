@@ -19,7 +19,7 @@ data_dir = Path(os.getenv("LAWSY_DATA_DIR", "data"))
 output_dir = Path(os.getenv("LAWSY_OUTPUT_DIR", "outputs"))
 icon_path = Path(__file__).parent / "Lawsy_logo_circle.png"
 
-st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
+st.set_page_config(page_title="Lawsy Pharma", layout="wide", page_icon=str(icon_path))
 
 text_encoder = load_text_encoder()
 vector_search_article_retriever = load_vector_search_article_retriever()
