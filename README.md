@@ -142,10 +142,57 @@ make lawsy-run-app
 | `LAWSY_VIOLATION_SUMMARY_LM` | 違反サマリー生成専用LM | `LAWSY_LM`と同じ | `anthropic/claude-3-5-sonnet-latest` |
 | `LAWSY_WEB_SEARCH_ENGINE` | Web検索エンジン | `DuckDuckGo` | `Google` |
 | `LAWSY_VIOLATION_SUMMARY_MAX_ITEMS` | 違反サマリーの最大表示数 | `10` | `5` |
+| `LAWSY_VIOLATION_SUMMARY_AUDIENCE` | サマリーの想定利用者 | `expert` | `business`, `general`, `custom` |
+| `LAWSY_VIOLATION_SUMMARY_TEMPLATE_PATH` | カスタムテンプレートパス | （なし） | `./custom_templates/my_template.yaml` |
 | `LAWSY_HISTORY_DIR` | 履歴保存ディレクトリ | `./lawsy_history` | `/path/to/history` |
 | `LAWSY_OUTPUT_DIR` | データ出力ディレクトリ | `./outputs` | `/path/to/outputs` |
 
-### カスタマイズ
+### サマリーのカスタマイズ
+
+違反・問題点のサマリー出力を想定利用者に応じてカスタマイズできます。
+
+#### 利用者タイプ別設定
+
+```bash
+# 専門家向け（デフォルト）- 詳細で技術的な内容
+LAWSY_VIOLATION_SUMMARY_AUDIENCE=expert
+
+# ビジネス担当者向け - 平易な表現でビジネスインパクト重視
+LAWSY_VIOLATION_SUMMARY_AUDIENCE=business
+
+# 一般利用者向け - わかりやすい説明
+LAWSY_VIOLATION_SUMMARY_AUDIENCE=general
+
+# カスタムテンプレート使用
+LAWSY_VIOLATION_SUMMARY_AUDIENCE=custom
+LAWSY_VIOLATION_SUMMARY_TEMPLATE_PATH=./my_templates/custom.yaml
+```
+
+#### カスタムテンプレートの作成
+
+`prompts/violation_summary/` 配下にあるYAMLテンプレートを参考に、独自のテンプレートを作成できます：
+
+```yaml
+# custom.yaml の例
+audience:
+  type: "custom"
+  description: "カスタム利用者"
+
+prompt:
+  role: "あなたは〇〇の専門家です。"
+  task: |
+    質問内容を分析し、以下を説明してください：
+    1. 問題の概要
+    2. 関連する法律
+    3. 対応方法
+
+  severity_criteria:
+    high: "緊急対応が必要な問題"
+    medium: "注意が必要な問題" 
+    low: "改善が望ましい点"
+```
+
+### UIカスタマイズ
 
 設定ファイル `.streamlit/config.toml` でUIのカスタマイズが可能です。
 
